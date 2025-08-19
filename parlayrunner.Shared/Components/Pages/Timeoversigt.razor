@@ -3,6 +3,7 @@
 @using parlayrunner.Shared.Components
 @using parlayrunner.Shared.Services
 @inject TeamSelectionService TeamService
+@inject NavigationManager Navigation
 
 <PageTitle>Timeoversigt</PageTitle>
 
@@ -19,7 +20,7 @@
     <div class="filter-bar">
         <div class="filter-left">
             <div class="filter-group">
-                <select class="filter-select" @bind="selectedStatus">
+                <select class="filter-select status-picker @GetTopFilterStatusClass()" @bind="selectedStatus">
                     <option value="">Status</option>
                     <option value="Afventer">Afventer</option>
                     <option value="Godkendt">Godkendt</option>
@@ -133,6 +134,40 @@
         background: white;
         cursor: pointer;
         min-width: 120px;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8"><path d="M6 8L0 2h12z" fill="%23666"/></svg>');
+        background-repeat: no-repeat;
+        background-position: right 8px center;
+        padding-right: 28px;
+    }
+
+    .status-picker {
+        font-weight: 500;
+    }
+
+    .status-picker.pending {
+        color: #007bff;
+        border-color: #007bff;
+        background-color: #f8f9ff;
+    }
+
+    .status-picker.approved {
+        color: #28a745;
+        border-color: #28a745;
+        background-color: #f8fff8;
+    }
+
+    .status-picker.rejected {
+        color: #dc3545;
+        border-color: #dc3545;
+        background-color: #fff8f8;
+    }
+
+    .status-picker:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
     }
 
     .date-picker-container {
@@ -580,6 +615,9 @@
                 // For now, open the same create panel
                 isCreatePanelVisible = true;
                 break;
+            case CreateType.Geofence:
+                Navigation.NavigateTo("/geofence-create");
+                break;
         }
         return Task.CompletedTask;
     }
@@ -603,6 +641,17 @@
             new Customer { Id = 1, Name = "VVS Hansen ApS", ContactPerson = "Lars Hansen", Email = "lars@vvshansen.dk", Phone = "+45 12 34 56 78" },
             new Customer { Id = 2, Name = "Elektro Nielsen A/S", ContactPerson = "Peter Nielsen", Email = "peter@elektronielsen.dk", Phone = "+45 87 65 43 21" },
             new Customer { Id = 3, Name = "Byg & Co", ContactPerson = "Mette Andersen", Email = "mette@bygco.dk", Phone = "+45 23 45 67 89" }
+        };
+    }
+
+    private string GetTopFilterStatusClass()
+    {
+        return selectedStatus switch
+        {
+            "Afventer" => "pending",
+            "Godkendt" => "approved",
+            "Afvist" => "rejected",
+            _ => ""
         };
     }
 

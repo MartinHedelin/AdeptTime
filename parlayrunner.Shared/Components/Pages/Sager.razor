@@ -5,6 +5,7 @@
 @using parlayrunner.Shared.Services
 @inject ISaegsService SaegsService
 @inject TeamSelectionService TeamService
+@inject NavigationManager Navigation
 
 <PageTitle>Sager</PageTitle>
 
@@ -546,6 +547,9 @@
                 // TODO: Implement employee creation functionality
                 // For now, open the same create panel
                 isCreatePanelVisible = true;
+                break;
+            case CreateType.Geofence:
+                Navigation.NavigateTo("/geofence-create");
                 break;
         }
         return Task.CompletedTask;

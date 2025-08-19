@@ -3,6 +3,7 @@ namespace parlayrunner.Shared.Models;
 public enum CreateType
 {
     Case,
-    Employee
+    Employee,
+    Geofence
 }
 

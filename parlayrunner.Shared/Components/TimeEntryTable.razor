@@ -5,9 +5,6 @@
         <table class="time-entry-table">
             <thead>
                 <tr>
-                    <th class="checkbox-col">
-                        <input type="checkbox" class="table-checkbox" />
-                    </th>
                     <th class="employee-col">Medarbejder</th>
                     <th class="date-col">Dato</th>
                     <th class="time-col">Check ind</th>
@@ -16,6 +13,7 @@
                     <th class="time-col">Timebank</th>
                     <th class="status-col">Godkend/Afvis</th>
                     <th class="admin-col">Admin</th>
+                    <th class="expand-col"></th>
                 </tr>
             </thead>
             <tbody>
@@ -23,28 +21,15 @@
                 {
                     @* Main row for the employee *@
                     <tr class="table-row main-row @(group.Value.Count > 1 ? "expandable" : "")" @onclick="() => HandleRowClick(group.Key)" @ondblclick="() => ShowEmployeeDetail(group.Key)">
-                        <td class="checkbox-col">
-                            <input type="checkbox" class="table-checkbox" @onclick:stopPropagation="true" />
-                        </td>
                         <td class="employee-col">
                             <div class="employee-info">
-                                @if (group.Value.Count > 1)
-                                {
-                                    <button class="expand-button" @onclick:stopPropagation="true" @onclick="() => ToggleExpansion(group.Key)">
-                                        @if (expandedEmployees.Contains(group.Key))
-                                        {
-                                            <i class="fas fa-chevron-down"></i>
-                                        }
-                                        else
-                                        {
-                                            <i class="fas fa-chevron-right"></i>
-                                        }
-                                    </button>
-                                }
                                 <img src="@group.Value.First().Employee.AvatarUrl" alt="@group.Value.First().Employee.Name" class="employee-avatar" />
                                 <div class="employee-details">
                                     <div class="employee-name">@group.Value.First().Employee.Name</div>
                                     <div class="employee-team">@group.Value.First().Employee.Team</div>
+                                    <div class="employee-checkbox">
+                                        <input type="checkbox" class="table-checkbox" @onclick:stopPropagation="true" />
+                                    </div>
                                 </div>
                             </div>
                         </td>
@@ -58,9 +43,16 @@
                             </span>
                         </td>
                         <td class="status-col">
-                            <span class="status-badge @GetStatusClass(group.Value.First().Status)">
-                                @GetStatusText(group.Value.First().Status)
-                            </span>
+                            <div class="status-picker-container">
+                                <select class="status-picker @GetStatusClass(group.Value.First().Status)" 
+                                        value="@GetStatusText(group.Value.First().Status)" 
+                                        @onchange="(e) => UpdateStatus(group.Value.First().Id, e.Value?.ToString())"
+                                        @onclick:stopPropagation="true">
+                                    <option value="Afventer">Afventer</option>
+                                    <option value="Godkendt">Godkendt</option>
+                                    <option value="Afvist">Afvist</option>
+                                </select>
+                            </div>
                         </td>
                         <td class="admin-col">
                             @if (group.Value.First().ApprovedBy != null)
@@ -75,6 +67,21 @@
                                 </div>
                             }
                         </td>
+                        <td class="expand-col">
+                            @if (group.Value.Count > 1)
+                            {
+                                <button class="expand-button" @onclick:stopPropagation="true" @onclick="() => ToggleExpansion(group.Key)">
+                                    @if (expandedEmployees.Contains(group.Key))
+                                    {
+                                        <i class="fas fa-chevron-down"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-chevron-right"></i>
+                                    }
+                                </button>
+                            }
+                        </td>
                     </tr>
 
                     @* Expanded rows for additional entries *@
@@ -84,14 +91,11 @@
                         {
                             var entry = group.Value[i];
                             <tr class="table-row expanded-row">
-                                <td class="checkbox-col">
-                                    <input type="checkbox" class="table-checkbox" />
-                                </td>
                                 <td class="employee-col">
                                     <div class="employee-info expanded">
                                         <div class="expand-spacer"></div>
                                         <div class="employee-details-minimal">
-                                            <!-- Empty or minimal content for expanded rows -->
+                                            <input type="checkbox" class="table-checkbox" />
                                         </div>
                                     </div>
                                 </td>
@@ -105,9 +109,16 @@
                                     </span>
                                 </td>
                                 <td class="status-col">
-                                    <span class="status-badge @GetStatusClass(entry.Status)">
-                                        @GetStatusText(entry.Status)
-                                    </span>
+                                    <div class="status-picker-container">
+                                        <select class="status-picker @GetStatusClass(entry.Status)" 
+                                                value="@GetStatusText(entry.Status)" 
+                                                @onchange="(e) => UpdateStatus(entry.Id, e.Value?.ToString())"
+                                                @onclick:stopPropagation="true">
+                                            <option value="Afventer">Afventer</option>
+                                            <option value="Godkendt">Godkendt</option>
+                                            <option value="Afvist">Afvist</option>
+                                        </select>
+                                    </div>
                                 </td>
                                 <td class="admin-col">
                                     @if (entry.ApprovedBy != null)
@@ -122,6 +133,7 @@
                                         </div>
                                     }
                                 </td>
+                                <td class="expand-col"></td>
                             </tr>
                         }
                     }
@@ -206,19 +218,19 @@
         border-right: none;
     }
 
-    .checkbox-col {
-        width: 50px;
-        text-align: center;
-    }
-
     .table-checkbox {
         width: 16px;
         height: 16px;
         cursor: pointer;
+        margin-top: 8px;
+    }
+
+    .employee-checkbox {
+        margin-top: 8px;
     }
 
     .employee-col {
-        min-width: 200px;
+        min-width: 220px;
     }
 
     .employee-info {
@@ -288,54 +300,78 @@
     }
 
     .status-col {
-        min-width: 120px;
+        min-width: 140px;
     }
 
-    .status-badge {
-        padding: 4px 12px;
-        border-radius: 16px;
+    .status-picker-container {
+        position: relative;
+    }
+
+    .status-picker {
+        padding: 8px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
         font-size: 13px;
         font-weight: 500;
-        display: inline-block;
-        text-align: center;
-        min-width: 80px;
+        cursor: pointer;
+        background: white;
+        min-width: 120px;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8"><path d="M6 8L0 2h12z" fill="%23666"/></svg>');
+        background-repeat: no-repeat;
+        background-position: right 8px center;
+        padding-right: 28px;
     }
 
-    .status-badge.pending {
+    .status-picker.pending {
         color: #007bff;
-        background-color: #e3f2fd;
+        border-color: #007bff;
+        background-color: #f8f9ff;
     }
 
-    .status-badge.approved {
+    .status-picker.approved {
         color: #28a745;
-        background-color: #d4edda;
+        border-color: #28a745;
+        background-color: #f8fff8;
     }
 
-    .status-badge.rejected {
+    .status-picker.rejected {
         color: #dc3545;
-        background-color: #f8d7da;
+        border-color: #dc3545;
+        background-color: #fff8f8;
+    }
+
+    .status-picker:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
     }
 
     .admin-col {
         min-width: 150px;
     }
 
+    .expand-col {
+        width: 50px;
+        text-align: center;
+    }
+
     .expand-button {
         background: #f8f9fa;
         border: 1px solid #dee2e6;
         padding: 0;
-        margin-right: 8px;
         cursor: pointer;
         color: #495057;
         font-size: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 20px;
-        height: 20px;
+        width: 24px;
+        height: 24px;
         border-radius: 4px;
         transition: all 0.2s ease;
-        flex-shrink: 0; /* Prevent button from shrinking */
+        flex-shrink: 0;
     }
 
     .expand-button:hover {
@@ -357,12 +393,18 @@
     }
 
     .expanded-row .employee-info {
-        padding-left: 28px;
+        padding-left: 40px;
     }
 
     .expand-spacer {
-        width: 20px;
+        width: 40px;
         margin-right: 8px;
+    }
+
+    .employee-details-minimal {
+        display: flex;
+        align-items: center;
+        min-height: 24px;
     }
 
     .main-row.expandable {
@@ -429,6 +471,19 @@
     private bool isDetailPanelVisible = false;
     private Employee? selectedEmployee = null;
     private List<TimeEntry>? selectedEmployeeEntries = null;
+    private Dictionary<int, string> selectedStatuses = new();
+
+    protected override void OnParametersSet()
+    {
+        // Initialize selected statuses for all time entries
+        foreach (var entry in TimeEntries)
+        {
+            if (!selectedStatuses.ContainsKey(entry.Id))
+            {
+                selectedStatuses[entry.Id] = GetStatusText(entry.Status);
+            }
+        }
+    }
 
     private Dictionary<int, List<TimeEntry>> GroupedTimeEntries
     {

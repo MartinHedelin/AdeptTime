@@ -27,7 +27,7 @@
                             <span class="rule-name">@rule.Name</span>
                         </td>
                         <td class="hours-col">
-                            <span class="working-hours">@rule.WorkingHours</span>
+                            <span class="working-hours">@GetWorkingHours(rule)</span>
                         </td>
                         <td class="address-col">
                             <span class="address-text">@rule.Address</span>
@@ -39,7 +39,7 @@
                             <span class="coordinate-value">@rule.Longitude.ToString("F4")</span>
                         </td>
                         <td class="radius-col">
-                            <span class="radius-value">@(rule.Radius)m</span>
+                            <span class="radius-value">@(rule.RadiusKm)km</span>
                         </td>
                     </tr>
                 }
@@ -205,4 +205,13 @@
 @code {
     [Parameter] public List<GeofenceRule> GeofenceRules { get; set; } = new();
     [Parameter] public EventCallback<GeofenceRule> OnRuleSelected { get; set; }
+
+    private string GetWorkingHours(GeofenceRule rule)
+    {
+        if (rule.StartTime.HasValue && rule.EndTime.HasValue)
+        {
+            return $"{rule.StartTime.Value:hh\\:mm} - {rule.EndTime.Value:hh\\:mm}";
+        }
+        return "All day";
+    }
 } 
