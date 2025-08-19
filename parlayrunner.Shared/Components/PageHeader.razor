@@ -27,10 +27,6 @@
                     @CreateButtonText
                     <i class="fas fa-chevron-down dropdown-arrow"></i>
                 </button>
-                <!-- Debug info next to button -->
-                <div style="position: absolute; top: -20px; right: 0; font-size: 10px; background: yellow; padding: 2px 4px; border-radius: 2px; z-index: 1001;">
-                    User: @UserRoleService.CurrentUserEmail | Admin: @UserRoleService.IsAdministrator
-                </div>
                 @if (showCreateDropdown)
                 {
                     <div class="create-dropdown">
