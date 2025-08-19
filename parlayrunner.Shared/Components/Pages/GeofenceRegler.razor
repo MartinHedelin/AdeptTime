@@ -1,6 +1,7 @@
 @page "/geofence-regler"
 @using parlayrunner.Shared.Models
 @using parlayrunner.Shared.Components
+@inject NavigationManager Navigation
 
 <PageTitle>Geofence regler</PageTitle>
 
@@ -10,7 +11,7 @@
         SearchPlaceholder="Søg i geofence regler..."
         CreateButtonText="Opret"
         OnFilterClicked="HandleFilterClick"
-        OnCreateClicked="HandleCreateClick"
+        OnCreateOptionSelected="HandleCreateOptionSelected"
         OnSearchTextChanged="HandleSearchTextChanged" />
 
     <div class="page-content @(isCreatePanelVisible ? "panel-open" : "")">
@@ -195,6 +196,24 @@
     private Task HandleCreateClick()
     {
         isCreatePanelVisible = true;
+        return Task.CompletedTask;
+    }
+
+    private Task HandleCreateOptionSelected(CreateType createType)
+    {
+        switch (createType)
+        {
+            case CreateType.Geofence:
+                Navigation.NavigateTo("/geofence-create");
+                break;
+            case CreateType.Case:
+                isCreatePanelVisible = true;
+                break;
+            case CreateType.Employee:
+                // TODO: Implement employee creation functionality
+                isCreatePanelVisible = true;
+                break;
+        }
         return Task.CompletedTask;
     }
 
