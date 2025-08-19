@@ -88,7 +88,7 @@
                     }
                 </select>
             </div>
-            <button class="plan-button">
+            <button class="plan-button" @onclick="OpenPlanningPanel">
                 <i class="fas fa-calendar-plus"></i>
                 Planlaeg
             </button>
@@ -96,7 +96,7 @@
     </div>
 
     <!-- Schedule Timeline -->
-    <div class="timeline-container @(isCreatePanelVisible ? "panel-open" : "")">
+    <div class="timeline-container @(isCreatePanelVisible || isPlanningPanelVisible ? "panel-open" : "")">
         <ScheduleTimeline 
             EmployeeGroups="employeeGroups"
             ScheduleEntries="FilteredScheduleEntries"
@@ -109,6 +109,14 @@
         IsVisible="isCreatePanelVisible"
         OnClose="CloseCreatePanel"
         OnCaseCreated="HandleCaseCreated"
+        Customers="customers"
+        Employees="employees" />
+
+    <!-- Planning Panel -->
+    <PlanningPanel 
+        IsVisible="isPlanningPanelVisible"
+        OnClose="ClosePlanningPanel"
+        ScheduleEntries="scheduleEntries"
         Customers="customers"
         Employees="employees" />
 </div>
@@ -367,6 +375,7 @@
     private string selectedStatus = "";
     private string selectedEmployee = "";
     private bool isCreatePanelVisible = false;
+    private bool isPlanningPanelVisible = false;
     private bool showDatePicker = false;
     private string dateRangeText = "";
 
@@ -523,6 +532,67 @@
                 JobTitle = "VVS ApS",
                 Location = "Sønderborg 21, 2da, 2300 Kbh N",
                 Status = ScheduleStatus.Scheduled
+            },
+            // Additional unassigned entries for planning
+            new ScheduleEntry
+            {
+                Id = 7,
+                Employee = null, // Unassigned
+                Customer = customers[0], // VVS ApS
+                Date = fromDate,
+                StartTime = new TimeSpan(13, 0, 0),
+                EndTime = new TimeSpan(13, 0, 0),
+                JobTitle = "VVS ApS",
+                Location = "Stokkevej 33, 2tv, 2300 Kbh N",
+                Status = ScheduleStatus.Scheduled
+            },
+            new ScheduleEntry
+            {
+                Id = 8,
+                Employee = null, // Unassigned
+                Customer = customers[0], // VVS ApS
+                Date = fromDate,
+                StartTime = new TimeSpan(19, 0, 0),
+                EndTime = new TimeSpan(18, 0, 0),
+                JobTitle = "VVS ApS",
+                Location = "Stokkevej 33, 2tv, 2300 Kbh N",
+                Status = ScheduleStatus.Scheduled
+            },
+            new ScheduleEntry
+            {
+                Id = 9,
+                Employee = null, // Unassigned
+                Customer = customers[0], // VVS ApS
+                Date = fromDate,
+                StartTime = new TimeSpan(13, 0, 0),
+                EndTime = new TimeSpan(13, 0, 0),
+                JobTitle = "VVS ApS",
+                Location = "Stokkevej 33, 2tv, 2300 Kbh N",
+                Status = ScheduleStatus.Scheduled
+            },
+            new ScheduleEntry
+            {
+                Id = 10,
+                Employee = null, // Unassigned
+                Customer = customers[0], // VVS ApS
+                Date = fromDate,
+                StartTime = new TimeSpan(13, 0, 0),
+                EndTime = new TimeSpan(18, 0, 0),
+                JobTitle = "VVS ApS",
+                Location = "Stokkevej 33, 2tv, 2300 Kbh N",
+                Status = ScheduleStatus.Scheduled
+            },
+            new ScheduleEntry
+            {
+                Id = 11,
+                Employee = null, // Unassigned
+                Customer = customers[0], // VVS ApS
+                Date = fromDate,
+                StartTime = new TimeSpan(19, 0, 0),
+                EndTime = new TimeSpan(19, 0, 0),
+                JobTitle = "VVS ApS",
+                Location = "Stokkevej 33, 2tv, 2300 Kbh N",
+                Status = ScheduleStatus.Scheduled
             }
         };
     }
@@ -588,6 +658,18 @@
     private void HandleCaseCreated(Case newCase)
     {
         // Handle the newly created case/schedule entry
+        StateHasChanged();
+    }
+
+    private void OpenPlanningPanel()
+    {
+        isPlanningPanelVisible = true;
+        StateHasChanged();
+    }
+
+    private void ClosePlanningPanel()
+    {
+        isPlanningPanelVisible = false;
         StateHasChanged();
     }
 

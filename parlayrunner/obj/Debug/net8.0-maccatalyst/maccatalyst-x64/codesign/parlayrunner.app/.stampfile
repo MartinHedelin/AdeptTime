@@ -1,1 +1,0 @@
--v --force --timestamp=none --sign - --entitlements /Users/martinhedelin/Projects/AT/parlayrunner/obj/Debug/net8.0-maccatalyst/maccatalyst-x64/Entitlements.xcent /Users/martinhedelin/Projects/AT/parlayrunner/bin/Debug/net8.0-maccatalyst/maccatalyst-x64/parlayrunner.app

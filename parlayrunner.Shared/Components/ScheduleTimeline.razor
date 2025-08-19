@@ -310,7 +310,7 @@
     private ScheduleEntry? GetScheduleForEmployeeAtHour(int employeeId, int hour)
     {
         return ScheduleEntries
-            .Where(s => s.Employee.Id == employeeId && 
+            .Where(s => s.Employee != null && s.Employee.Id == employeeId && 
                        s.Date.Date == SelectedDate.Date &&
                        s.StartTime.Hours <= hour && 
                        s.EndTime.Hours > hour)
