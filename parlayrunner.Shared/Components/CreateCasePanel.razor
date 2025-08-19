@@ -1,0 +1,571 @@
+@using parlayrunner.Shared.Models
+@using parlayrunner.Shared.Interfaces
+@inject ISaegsService SaegsService
+
+<div class="create-case-overlay @(IsVisible ? "visible" : "")">
+    <div class="create-case-panel @(IsVisible ? "open" : "")">
+        <!-- Step Progress Header -->
+        <div class="step-progress">
+            <div class="step @(currentStep == 1 ? "active" : "") @(currentStep > 1 ? "completed" : "")">
+                <div class="step-number">@(currentStep > 1 ? "✓" : "1")</div>
+                <div class="step-dots">............</div>
+            </div>
+            <div class="step @(currentStep == 2 ? "active" : "") @(currentStep > 2 ? "completed" : "")">
+                <div class="step-number">@(currentStep > 2 ? "✓" : "2")</div>
+                <div class="step-dots">............</div>
+            </div>
+            <div class="step @(currentStep == 3 ? "active" : "")">
+                <div class="step-number">3</div>
+            </div>
+        </div>
+
+        <!-- Step Titles -->
+        <div class="step-titles">
+            <div class="step-title @(currentStep == 1 ? "active" : "")">Tilføj kunde</div>
+            <div class="step-title @(currentStep == 2 ? "active" : "")">Sags Info</div>
+            <div class="step-title @(currentStep == 3 ? "active" : "")">Planlæg sag</div>
+        </div>
+
+        <div class="panel-content">
+            @if (currentStep == 1)
+            {
+                <!-- Step 1: Customer Selection -->
+                <div class="form-group">
+                    <label for="customer">Kunde <span class="required">(required)</span></label>
+                    <select id="customer" @bind="selectedCustomerId" class="form-select">
+                        <option value="0">Tilføj kunde</option>
+                        @foreach (var customer in Customers)
+                        {
+                            <option value="@customer.Id">@customer.Name</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <select id="status" @bind="selectedStatus" class="form-select">
+                        <option value="Ny">Ny</option>
+                        <option value="Igangværende">Igangværende</option>
+                        <option value="Afsluttet">Afsluttet</option>
+                    </select>
+                </div>
+            }
+            else if (currentStep == 2)
+            {
+                <!-- Step 2: Case Information -->
+                <div class="form-group">
+                    <label for="employee">Medarbejder</label>
+                    <select id="employee" @bind="selectedEmployeeId" class="form-select">
+                        <option value="0">Tilføj kontaktperson</option>
+                        @foreach (var employee in Employees)
+                        {
+                            <option value="@employee.Id">@employee.Name</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="department">Afdeling</label>
+                    <select id="department" @bind="newCase.Department" class="form-select">
+                        <option value="">Tilføj afdeling</option>
+                        <option value="VVS">VVS</option>
+                        <option value="El">El</option>
+                        <option value="Tømrer">Tømrer</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="contact-person">Kontaktperson</label>
+                    <select id="contact-person" class="form-select">
+                        <option value="">Tilføj kontaktperson</option>
+                        <option value="Lars Hansen">Lars Hansen</option>
+                        <option value="Peter Nielsen">Peter Nielsen</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" @bind="addLater" />
+                        <span class="checkmark"></span>
+                        Tilføj senere
+                    </label>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="start-date">Start dato</label>
+                        <select class="form-select date-select">
+                            <option value="2022-01-22">22 January 2022</option>
+                            <option value="2022-01-23">23 January 2022</option>
+                            <option value="2022-01-24">24 January 2022</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="end-date">Start dato</label>
+                        <select class="form-select date-select">
+                            <option value="2022-01-22">22 January 2022</option>
+                            <option value="2022-01-23">23 January 2022</option>
+                            <option value="2022-01-24">24 January 2022</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="action-button-container">
+                    <button class="btn-schedule" @onclick="() => {}" type="button">
+                        <i class="fas fa-calendar"></i>
+                        Planlæg sag
+                    </button>
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" @bind="scheduleLater" />
+                        <span class="checkmark"></span>
+                        Planlæg senere
+                    </label>
+                </div>
+            }
+            else if (currentStep == 3)
+            {
+                <!-- Step 3: Plan Case -->
+                <div class="form-group">
+                    <label for="location">Lokation for opgaven</label>
+                    <input type="text" id="location" @bind="caseLocation" placeholder="Tilføj adresse" class="form-input" />
+                </div>
+
+                <div class="form-group">
+                    <label for="geofence">Tilføj geofence regel</label>
+                    <select id="geofence" @bind="selectedGeofence" class="form-select">
+                        <option value="">Tilføj geofence</option>
+                        <option value="Office Area">Office Area</option>
+                        <option value="Construction Site">Construction Site</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="time-total">Time total</label>
+                    <input type="text" id="time-total" @bind="totalTime" placeholder="Tilføj time total" class="form-input" />
+                </div>
+
+                <div class="form-group">
+                    <label for="documentation">Upload dokumentation</label>
+                    <div class="upload-area">
+                        <button type="button" class="upload-btn">
+                            <i class="fas fa-upload"></i>
+                            Upload
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Beskrivelse <span class="required">(required)</span></label>
+                    <textarea id="description" @bind="newCase.Description" placeholder="Tilføj beskrivelse" rows="4" class="form-textarea"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="comment">Kommentar</label>
+                    <textarea id="comment" @bind="newCase.Comment" placeholder="Tilføj kommentar" rows="3" class="form-textarea"></textarea>
+                </div>
+            }
+        </div>
+
+        <div class="panel-footer">
+            <button class="btn-secondary" @onclick="ClosePanel">Cancel</button>
+            @if (currentStep < 3)
+            {
+                <button class="btn-primary" @onclick="NextStep">@(currentStep == 1 ? "Næste" : "Opret sag")</button>
+            }
+            else
+            {
+                <button class="btn-primary" @onclick="CreateCase">Næste</button>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .create-case-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        visibility: hidden;
+        opacity: 0;
+        transition: all 0.3s ease;
+        z-index: 1000;
+    }
+
+    .create-case-overlay.visible {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    .create-case-panel {
+        position: fixed;
+        top: 0;
+        right: -420px;
+        width: 420px;
+        height: 100vh;
+        background: white;
+        box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+        transition: right 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        z-index: 1001;
+    }
+
+    .create-case-panel.open {
+        right: 0;
+    }
+
+    /* Step Progress */
+    .step-progress {
+        padding: 24px 24px 0 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0;
+    }
+
+    .step {
+        display: flex;
+        align-items: center;
+        color: #9ca3af;
+    }
+
+    .step.active {
+        color: #6366f1;
+    }
+
+    .step.completed {
+        color: #6366f1;
+    }
+
+    .step-number {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: 2px solid currentColor;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 600;
+        background: white;
+    }
+
+    .step.completed .step-number {
+        background: #6366f1;
+        color: white;
+        border-color: #6366f1;
+    }
+
+    .step-dots {
+        margin: 0 8px;
+        color: #e5e7eb;
+        font-size: 12px;
+        letter-spacing: 2px;
+    }
+
+    .step:last-child .step-dots {
+        display: none;
+    }
+
+    /* Step Titles */
+    .step-titles {
+        padding: 16px 24px 24px 24px;
+        display: flex;
+        justify-content: space-between;
+        text-align: center;
+    }
+
+    .step-title {
+        flex: 1;
+        font-size: 14px;
+        color: #6b7280;
+        font-weight: 500;
+    }
+
+    .step-title.active {
+        color: #111827;
+        font-weight: 600;
+    }
+
+    .panel-content {
+        flex: 1;
+        padding: 0 24px 24px 24px;
+        overflow-y: auto;
+    }
+
+    /* Form Elements */
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #374151;
+    }
+
+    .required {
+        color: #9ca3af;
+        font-weight: 400;
+    }
+
+    .form-select,
+    .form-input,
+    .form-textarea {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 14px;
+        background: white;
+        color: #6b7280;
+        transition: border-color 0.2s ease;
+    }
+
+    .form-select:focus,
+    .form-input:focus,
+    .form-textarea:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .form-textarea {
+        resize: vertical;
+        font-family: inherit;
+    }
+
+    .date-select {
+        color: #374151;
+    }
+
+    /* Checkbox */
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        font-size: 14px;
+        color: #374151;
+        margin-bottom: 0;
+    }
+
+    .checkbox-label input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        margin-right: 8px;
+        accent-color: #6366f1;
+    }
+
+    /* Action Button */
+    .action-button-container {
+        margin: 20px 0;
+    }
+
+    .btn-schedule {
+        padding: 12px 20px;
+        background: #8b5cf6;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: background-color 0.2s ease;
+    }
+
+    .btn-schedule:hover {
+        background: #7c3aed;
+    }
+
+    /* Upload */
+    .upload-area {
+        border: 2px dashed #d1d5db;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        background: #f9fafb;
+    }
+
+    .upload-btn {
+        padding: 8px 16px;
+        background: white;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 14px;
+        color: #374151;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: background-color 0.2s ease;
+    }
+
+    .upload-btn:hover {
+        background: #f3f4f6;
+    }
+
+    /* Footer */
+    .panel-footer {
+        padding: 24px;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        background: white;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+        background: #938FBF;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #7A75A8;
+    }
+
+    .btn-secondary {
+        background: white;
+        color: #374151;
+        border: 1px solid #d1d5db;
+    }
+
+    .btn-secondary:hover {
+        background: #f9fafb;
+    }
+
+    @@media (max-width: 768px) {
+        .create-case-panel {
+            width: 100%;
+            right: -100%;
+        }
+    }
+</style>
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<Case> OnCaseCreated { get; set; }
+    [Parameter] public List<Customer> Customers { get; set; } = new();
+    [Parameter] public List<Employee> Employees { get; set; } = new();
+
+    private Case newCase = new();
+    private int selectedCustomerId = 0;
+    private int selectedEmployeeId = 0;
+    private string selectedStatus = "Ny";
+    private string caseLocation = "";
+    private string selectedGeofence = "";
+    private string totalTime = "";
+    private bool addLater = false;
+    private bool scheduleLater = false;
+    private int currentStep = 1;
+
+    protected override void OnParametersSet()
+    {
+        if (IsVisible)
+        {
+            ResetForm();
+        }
+    }
+
+    private void ResetForm()
+    {
+        newCase = new Case
+        {
+            CaseNumber = $"SAG-{DateTime.Now:yyyy}-{Random.Shared.Next(1000, 9999):0000}",
+            StartDate = DateTime.Today,
+            EndDate = DateTime.Today.AddDays(7),
+            Status = CaseStatus.Pending,
+            CompletedHours = 0
+        };
+        selectedCustomerId = 0;
+        selectedEmployeeId = 0;
+        selectedStatus = "Ny";
+        caseLocation = "";
+        selectedGeofence = "";
+        totalTime = "";
+        addLater = false;
+        scheduleLater = false;
+        currentStep = 1;
+    }
+
+    private void NextStep()
+    {
+        if (currentStep < 3)
+        {
+            currentStep++;
+        }
+        else if (currentStep == 2)
+        {
+            // From step 2, "Opret sag" should create the case
+            CreateCase();
+        }
+    }
+
+    private async Task ClosePanel()
+    {
+        await OnClose.InvokeAsync();
+    }
+
+    private async Task CreateCase()
+    {
+        if (selectedCustomerId > 0)
+        {
+            newCase.Customer = Customers.FirstOrDefault(c => c.Id == selectedCustomerId) ?? new Customer();
+        }
+
+        if (selectedEmployeeId > 0)
+        {
+            newCase.AssignedEmployee = Employees.FirstOrDefault(e => e.Id == selectedEmployeeId) ?? new Employee();
+        }
+
+        // Map selected status to enum
+        newCase.Status = selectedStatus switch
+        {
+            "Ny" => CaseStatus.Pending,
+            "Igangværende" => CaseStatus.Badges,
+            "Afsluttet" => CaseStatus.Review,
+            _ => CaseStatus.Pending
+        };
+
+        // Set additional properties
+        if (int.TryParse(totalTime, out var hours))
+        {
+            newCase.TotalHours = hours;
+        }
+
+        // Use the service to add the case directly
+        var addedCase = await SaegsService.AddCaseAsync(newCase);
+        
+        // Still call the parent callback for compatibility
+        await OnCaseCreated.InvokeAsync(addedCase);
+        await ClosePanel();
+    }
+} 

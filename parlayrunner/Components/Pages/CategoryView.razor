@@ -1,0 +1,98 @@
+﻿@page "/category/{CategoryName}"
+@using parlayrunner.Shared.Interfaces;
+@using parlayrunner.Shared.Models;
+@inject NavigationManager NavigationManager
+@inject ICloudService CloudService
+@inject IParlayService ParlayService
+
+<div class="home-container">
+    <div class="sports-scroll">
+        @foreach (var category in ViewModel.Categories)
+        {
+            <div class="sport-item" @onclick='() => NavigationManager.NavigateTo($"/subcategory/{CategoryName}/{category.Name}")'>
+                <div class="sport-icon">@category.Icon</div>
+                <span>@category.Name</span>
+            </div>
+        }
+    </div>
+
+
+    <div class="content-area">
+        <!--
+        <div class="featured-banner">
+            <div class="banner-content">
+                <h2>EC ON HOME TURF</h2>
+                <p>PARKEN - 21. - 27. AUGUST</p>
+            </div>
+        </div>
+        -->
+
+        <!-- Matches List -->
+        <div class="matches-container">
+            <h3 class="day-section-title">Today</h3>
+
+            @{
+                var groupedMatches = ViewModel?.Matches?
+                    .GroupBy(m => m.Time)
+                    .OrderBy(g => g.Key);
+            }
+
+            @if (groupedMatches != null)
+            {
+                @foreach (var timeGroup in groupedMatches)
+                {
+                    <h3 class="section-title">@timeGroup.Key</h3>
+                    @foreach (var match in timeGroup)
+                    {
+                        <div class="match-card">
+                            <div class="match-teams">
+                                <div class="team">@match.HomeTeam</div>
+                                <div class="team">@match.AwayTeam</div>
+                            </div>
+                            <div class="match-odds">
+                                <button class="odd-button @(ViewModel._parlayService.IsBetSelected(match.Id, "1") ? "selected" : "")"
+                                        @onclick='() => ViewModel._parlayService.AddBet(match, "1", match.HomeOdd)'>
+                                    <div class="odd-type">1</div>
+                                    <div class="odd-value">@match.HomeOdd</div>
+                                </button>
+                                <button class="odd-button @(ViewModel._parlayService.IsBetSelected(match.Id, "X") ? "selected" : "")"
+                                        @onclick='() => ViewModel._parlayService.AddBet(match, "X", match.DrawOdd)'>
+                                    <div class="odd-type">X</div>
+                                    <div class="odd-value">@match.DrawOdd</div>
+                                </button>
+                                <button class="odd-button @(ViewModel._parlayService.IsBetSelected(match.Id, "2") ? "selected" : "")"
+                                        @onclick='() => ViewModel._parlayService.AddBet(match, "2", match.AwayOdd)'>
+                                    <div class="odd-type">2</div>
+                                    <div class="odd-value">@match.AwayOdd</div>
+                                </button>
+                                <div class="more-odds">+@match.MoreOdds</div>
+                            </div>
+                        </div>
+                    }
+                }
+            }
+        </div>
+    </div>
+
+</div>
+
+@code {
+    [Parameter]
+    public string CategoryName { get; set; }
+    private CategoryViewModel ViewModel;
+
+    protected override void OnInitialized()
+    {
+        ViewModel = new CategoryViewModel(CloudService, ParlayService, CategoryName);
+    }
+
+    protected override void OnParametersSet()
+    {
+        ViewModel = new CategoryViewModel(CloudService, ParlayService, CategoryName);
+    }
+
+    private bool IsSelected(Match match, string betType)
+    {
+        return match.SelectedBetType == betType;
+    }
+}

@@ -1,0 +1,624 @@
+@page "/planlaegning"
+@using parlayrunner.Shared.Models
+@using parlayrunner.Shared.Components
+
+<PageTitle>Planlægning</PageTitle>
+
+<div class="planlaegning-page">
+    <!-- Main Header using reusable PageHeader component -->
+    <PageHeader 
+        Title="Planlægning"
+        ShowSearchInput="false"
+        CreateButtonText="Opret"
+        OnFilterClicked="HandleFilterClick"
+        OnCreateOptionSelected="HandleCreateOptionSelected" />
+
+    <!-- Secondary Filter Bar -->
+    <div class="filter-bar">
+        <div class="filter-left">
+            <div class="filter-group">
+                <select class="filter-select" @bind="selectedMonth">
+                    <option value="Januar">Januar</option>
+                    <option value="Februar">Februar</option>
+                    <option value="Marts">Marts</option>
+                    <option value="April">April</option>
+                    <option value="Maj">Maj</option>
+                    <option value="Juni">Juni</option>
+                    <option value="Juli">Juli</option>
+                    <option value="August">August</option>
+                    <option value="September">September</option>
+                    <option value="Oktober">Oktober</option>
+                    <option value="November">November</option>
+                    <option value="December">December</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <select class="filter-select" @bind="selectedWeek">
+                    <option value="42">Week 42</option>
+                    <option value="41">Week 41</option>
+                    <option value="43">Week 43</option>
+                    <option value="44">Week 44</option>
+                </select>
+            </div>
+            <div class="filter-group date-picker-container">
+                <input type="text" class="date-range-single" @bind="dateRangeText" placeholder="Vælg periode..." 
+                       @onclick="ToggleDatePicker" readonly />
+                @if (showDatePicker)
+                {
+                    <div class="date-picker-dropdown">
+                        <div class="date-picker-header">
+                            <span>Vælg periode</span>
+                            <button class="close-btn" @onclick="CloseDatePicker">×</button>
+                        </div>
+                        <div class="date-inputs">
+                            <div class="date-field">
+                                <label>Fra:</label>
+                                <input type="date" @bind="fromDate" @bind:event="oninput" />
+                            </div>
+                            <div class="date-field">
+                                <label>Til:</label>
+                                <input type="date" @bind="toDate" @bind:event="oninput" />
+                            </div>
+                        </div>
+                        <div class="date-picker-actions">
+                            <button class="apply-btn" @onclick="ApplyDateRange">Anvend</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+        <div class="filter-right">
+            <div class="filter-group">
+                <select class="filter-select" @bind="selectedStatus">
+                    <option value="">Status</option>
+                    <option value="Scheduled">Planlagt</option>
+                    <option value="InProgress">I gang</option>
+                    <option value="Completed">Færdig</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <select class="filter-select" @bind="selectedEmployee">
+                    <option value="">Medarbejder</option>
+                    @foreach (var group in employeeGroups)
+                    {
+                        @foreach (var employee in group.Employees)
+                        {
+                            <option value="@employee.Id">@employee.Name</option>
+                        }
+                    }
+                </select>
+            </div>
+            <button class="plan-button">
+                <i class="fas fa-calendar-plus"></i>
+                Planlaeg
+            </button>
+        </div>
+    </div>
+
+    <!-- Schedule Timeline -->
+    <div class="timeline-container @(isCreatePanelVisible ? "panel-open" : "")">
+        <ScheduleTimeline 
+            EmployeeGroups="employeeGroups"
+            ScheduleEntries="FilteredScheduleEntries"
+            SelectedDate="fromDate"
+            OnGroupToggled="HandleGroupToggled" />
+    </div>
+
+    <!-- Create Case Panel -->
+    <CreateCasePanel 
+        IsVisible="isCreatePanelVisible"
+        OnClose="CloseCreatePanel"
+        OnCaseCreated="HandleCaseCreated"
+        Customers="customers"
+        Employees="employees" />
+</div>
+
+<style>
+    .planlaegning-page {
+        background-color: #f8f9fa;
+        min-height: 100vh;
+        padding: 0;
+        position: relative;
+    }
+
+    .timeline-container {
+        transition: margin-right 0.3s ease;
+        margin-right: 0;
+    }
+
+    .timeline-container.panel-open {
+        margin-right: 420px;
+    }
+
+    .filter-bar {
+        background: white;
+        padding: 16px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #e9ecef;
+        gap: 20px;
+    }
+
+    .filter-left, .filter-right {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .filter-select {
+        padding: 8px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        font-size: 14px;
+        background: white;
+        cursor: pointer;
+        min-width: 120px;
+        color: #495057;
+    }
+
+    .filter-select:focus {
+        outline: none;
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+
+    .date-picker-container {
+        position: relative;
+    }
+
+    .date-range-single {
+        padding: 8px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        font-size: 14px;
+        background: white;
+        cursor: pointer;
+        min-width: 200px;
+        color: #495057;
+        width: 100%;
+    }
+
+    .date-range-single:focus {
+        outline: none;
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+
+    .date-picker-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background: white;
+        border: 1px solid #ced4da;
+        border-radius: 8px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+        margin-top: 4px;
+        padding: 20px;
+        min-width: 350px;
+        max-width: 400px;
+    }
+
+    .date-picker-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 16px;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+        color: #6c757d;
+        padding: 0;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .close-btn:hover {
+        color: #495057;
+        background: #f8f9fa;
+        border-radius: 50%;
+    }
+
+    .date-inputs {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+
+    .date-field {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .date-field label {
+        font-size: 12px;
+        color: #6c757d;
+        font-weight: 500;
+    }
+
+    .date-field input {
+        padding: 10px;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: border-color 0.2s ease;
+    }
+
+    .date-field input:focus {
+        outline: none;
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+
+    .date-picker-actions {
+        display: flex;
+        justify-content: flex-end;
+        padding-top: 12px;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .apply-btn {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+    .apply-btn:hover {
+        background: #0056b3;
+    }
+
+    .plan-button {
+        padding: 8px 16px;
+        background: #938FBF;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .plan-button:hover {
+        background: #7A75A8;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(147, 143, 191, 0.3);
+    }
+
+    .timeline-container {
+        padding: 24px 30px;
+    }
+
+    @@media (max-width: 1200px) {
+        .filter-bar {
+            flex-direction: column;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .filter-left, .filter-right {
+            width: 100%;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .timeline-container {
+            padding: 16px 20px;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .filter-left, .filter-right {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .filter-group {
+            width: 100%;
+        }
+
+        .filter-select, .date-input {
+            width: 100%;
+        }
+
+        .timeline-container {
+            padding: 12px 16px;
+        }
+    }
+</style>
+
+@code {
+    private string searchQuery = "";
+    private string selectedMonth = "Januar";
+    private string selectedWeek = "42";
+    private DateTime fromDate = new DateTime(2022, 1, 22);
+    private DateTime toDate = new DateTime(2022, 1, 28);
+    private string selectedStatus = "";
+    private string selectedEmployee = "";
+    private bool isCreatePanelVisible = false;
+    private bool showDatePicker = false;
+    private string dateRangeText = "";
+
+    private List<EmployeeGroup> employeeGroups = new();
+    private List<ScheduleEntry> scheduleEntries = new();
+    private List<Customer> customers = new();
+    private List<Employee> employees = new();
+
+    protected override void OnInitialized()
+    {
+        InitializeCustomers();
+        InitializeEmployees();
+        InitializeEmployeeGroups();
+        InitializeScheduleEntries();
+        UpdateDateRange();
+    }
+
+    private void InitializeCustomers()
+    {
+        customers = new List<Customer>
+        {
+            new Customer { Id = 1, Name = "VVS ApS", ContactPerson = "Lars Hansen" },
+            new Customer { Id = 2, Name = "Elektro Nielsen", ContactPerson = "Peter Nielsen" },
+            new Customer { Id = 3, Name = "Byg & Co", ContactPerson = "Mette Andersen" }
+        };
+    }
+
+    private void InitializeEmployees()
+    {
+        employees = new List<Employee>
+        {
+            new Employee { Id = 1, Name = "James Carter", Team = "Team London", AvatarUrl = "https://plus.unsplash.com/premium_photo-1671656349322-41de944d259b?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHhzZWFyY2h8MXx8cG9ydHJhaXR8ZW58MHx8MHx8fDA%3D" },
+            new Employee { Id = 2, Name = "Liam Anders", Team = "Team London", AvatarUrl = "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHhzZWFyY2h8Mnx8cG9ydHJhaXR8ZW58MHx8MHx8fDA%3D" },
+            new Employee { Id = 3, Name = "Noah Bennett", Team = "Team London", AvatarUrl = "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHhzZWFyY2h8Nnx8cG9ydHJhaXR8ZW58MHx8MHx8fDA%3D" }
+        };
+    }
+
+    private void InitializeEmployeeGroups()
+    {
+        var employees = new List<Employee>
+        {
+            new Employee { Id = 1, Name = "Noah Bennett", Team = "Team London", AvatarUrl = "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8cG9ydHJhaXR8ZW58MHx8MHx8fDA%3D" },
+            new Employee { Id = 2, Name = "Liam Anders", Team = "Team London", AvatarUrl = "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cG9ydHJhaXR8ZW58MHx8MHx8fDA%3D" },
+            new Employee { Id = 3, Name = "James Carter", Team = "Team London", AvatarUrl = "https://plus.unsplash.com/premium_photo-1671656349322-41de944d259b?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8cG9ydHJhaXR8ZW58MHx8MHx8fDA%3D" },
+            new Employee { Id = 4, Name = "Ethan Clark", Team = "Team London", AvatarUrl = "https://plus.unsplash.com/premium_photo-1671656349322-41de944d259b?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHhzZWFyY2h8MXx8cG9ydHJhaXR8ZW58MHx8MHx8fDA%3D" },
+            new Employee { Id = 5, Name = "Oliver Hayes", Team = "Team London", AvatarUrl = "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHhzZWFyY2h8Mnx8cG9ydHJhaXR8ZW58MHx8MHx8fDA%3D" },
+            new Employee { Id = 6, Name = "Lucas Reid", Team = "Team Dublin", AvatarUrl = "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHhzZWFyY2h8Nnx8cG9ydHJhaXR8ZW58MHx8MHx8fDA%3D" },
+            new Employee { Id = 7, Name = "Mason Turner", Team = "Team Dublin", AvatarUrl = "https://plus.unsplash.com/premium_photo-1671656349322-41de944d259b?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHhzZWFyY2h8MXx8cG9ydHJhaXR8ZW58MHx8MHx8fDA%3D" },
+            new Employee { Id = 8, Name = "Henry Collins", Team = "Team Dublin", AvatarUrl = "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHhzZWFyY2h8Mnx8cG9ydHJhaXR8ZW58MHx8MHx8fDA%3D" },
+            new Employee { Id = 9, Name = "Aiden Brooks", Team = "Team Dublin", AvatarUrl = "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHhzZWFyY2h8Nnx8cG9ydHJhaXR8ZW58MHx8MHx8fDA%3D" }
+        };
+
+        employeeGroups = new List<EmployeeGroup>
+        {
+            new EmployeeGroup
+            {
+                Name = "Ikke allokeret",
+                Employees = employees.Where(e => e.Id <= 2).ToList(),
+                IsExpanded = false
+            },
+            new EmployeeGroup
+            {
+                Name = "Team London",
+                Employees = employees.Where(e => e.Team == "Team London" && e.Id > 2).ToList(),
+                IsExpanded = true
+            },
+            new EmployeeGroup
+            {
+                Name = "Team Dublin",
+                Employees = employees.Where(e => e.Team == "Team Dublin").ToList(),
+                IsExpanded = true
+            }
+        };
+    }
+
+    private void InitializeScheduleEntries()
+    {
+        scheduleEntries = new List<ScheduleEntry>
+        {
+            // Noah Bennett - VVS ApS
+            new ScheduleEntry
+            {
+                Id = 1,
+                Employee = employeeGroups[0].Employees[0], // Noah Bennett
+                Customer = customers[0], // VVS ApS
+                Date = fromDate,
+                StartTime = new TimeSpan(12, 30, 0),
+                EndTime = new TimeSpan(16, 0, 0),
+                JobTitle = "VVS ApS",
+                Location = "Vesterbro 36, 2da, 2300 Kbh N",
+                Status = ScheduleStatus.Scheduled
+            },
+            // Ethan Clark - VVS ApS
+            new ScheduleEntry
+            {
+                Id = 2,
+                Employee = employeeGroups[1].Employees[1], // Ethan Clark
+                Customer = customers[0], // VVS ApS
+                Date = fromDate,
+                StartTime = new TimeSpan(11, 0, 0),
+                EndTime = new TimeSpan(13, 0, 0),
+                JobTitle = "VVS ApS",
+                Location = "Sønderborg 36, 2da, 2300 Kbh N",
+                Status = ScheduleStatus.Scheduled
+            },
+            // Lucas Reid - longer appointment
+            new ScheduleEntry
+            {
+                Id = 3,
+                Employee = employeeGroups[2].Employees[0], // Lucas Reid
+                Customer = customers[0], // VVS ApS
+                Date = fromDate,
+                StartTime = new TimeSpan(8, 0, 0),
+                EndTime = new TimeSpan(14, 0, 0),
+                JobTitle = "VVS ApS",
+                Location = "Vesterbro 36, 2da, 2300 Kbh N",
+                Status = ScheduleStatus.Scheduled
+            },
+            // Mason Turner - VVS ApS
+            new ScheduleEntry
+            {
+                Id = 4,
+                Employee = employeeGroups[2].Employees[1], // Mason Turner
+                Customer = customers[0], // VVS ApS
+                Date = fromDate,
+                StartTime = new TimeSpan(8, 0, 0),
+                EndTime = new TimeSpan(10, 30, 0),
+                JobTitle = "VVS ApS",
+                Location = "Sønderborg 21, 2da, 2300 Kbh N",
+                Status = ScheduleStatus.Scheduled
+            },
+            // Henry Collins - VVS ApS
+            new ScheduleEntry
+            {
+                Id = 5,
+                Employee = employeeGroups[2].Employees[2], // Henry Collins
+                Customer = customers[0], // VVS ApS
+                Date = fromDate,
+                StartTime = new TimeSpan(12, 0, 0),
+                EndTime = new TimeSpan(14, 0, 0),
+                JobTitle = "VVS ApS",
+                Location = "Sønderborg 22, 2da, 2300 Kbh N",
+                Status = ScheduleStatus.Scheduled
+            },
+            // Aiden Brooks - VVS ApS
+            new ScheduleEntry
+            {
+                Id = 6,
+                Employee = employeeGroups[2].Employees[3], // Aiden Brooks
+                Customer = customers[0], // VVS ApS
+                Date = fromDate,
+                StartTime = new TimeSpan(8, 0, 0),
+                EndTime = new TimeSpan(11, 0, 0),
+                JobTitle = "VVS ApS",
+                Location = "Sønderborg 21, 2da, 2300 Kbh N",
+                Status = ScheduleStatus.Scheduled
+            }
+        };
+    }
+
+    private List<ScheduleEntry> FilteredScheduleEntries
+    {
+        get
+        {
+            var filtered = scheduleEntries.AsEnumerable();
+
+            // Filter by date range
+            filtered = filtered.Where(s => s.Date >= fromDate && s.Date <= toDate);
+
+            if (!string.IsNullOrEmpty(selectedStatus) && Enum.TryParse<ScheduleStatus>(selectedStatus, out var status))
+            {
+                filtered = filtered.Where(s => s.Status == status);
+            }
+
+            if (!string.IsNullOrEmpty(selectedEmployee) && int.TryParse(selectedEmployee, out var employeeId))
+            {
+                filtered = filtered.Where(s => s.Employee.Id == employeeId);
+            }
+
+            if (!string.IsNullOrEmpty(searchQuery))
+            {
+                filtered = filtered.Where(s =>
+                    s.Customer.Name.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                    s.Employee.Name.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                    s.Location.Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
+            }
+
+            return filtered.ToList();
+        }
+    }
+
+    private Task HandleFilterClick()
+    {
+        // TODO: Implement advanced filter functionality
+        return Task.CompletedTask;
+    }
+
+    private Task HandleCreateOptionSelected(CreateType createType)
+    {
+        switch (createType)
+        {
+            case CreateType.Case:
+                isCreatePanelVisible = true;
+                break;
+            case CreateType.Employee:
+                // TODO: Implement employee creation functionality
+                // For now, open the same create panel
+                isCreatePanelVisible = true;
+                break;
+        }
+        return Task.CompletedTask;
+    }
+
+    private void CloseCreatePanel()
+    {
+        isCreatePanelVisible = false;
+    }
+
+    private void HandleCaseCreated(Case newCase)
+    {
+        // Handle the newly created case/schedule entry
+        StateHasChanged();
+    }
+
+    private Task HandleGroupToggled(EmployeeGroup group)
+    {
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private void ToggleDatePicker()
+    {
+        showDatePicker = !showDatePicker;
+        StateHasChanged();
+    }
+
+    private void CloseDatePicker()
+    {
+        showDatePicker = false;
+        StateHasChanged();
+    }
+
+    private void ApplyDateRange()
+    {
+        UpdateDateRange();
+        showDatePicker = false;
+        StateHasChanged();
+    }
+
+    private void UpdateDateRange()
+    {
+        dateRangeText = $"{fromDate:dd/MM/yyyy} - {toDate:dd/MM/yyyy}";
+        InvokeAsync(StateHasChanged);
+    }
+} 

@@ -1,0 +1,96 @@
+@using parlayrunner.Shared.Interfaces
+@inject IAuthenticationService AuthService
+@inject NavigationManager NavigationManager
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public bool RequireAuth { get; set; } = true;
+
+    private bool _isLoading = true;
+    private bool _isAuthenticated = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _isAuthenticated = await AuthService.IsAuthenticatedAsync();
+        _isLoading = false;
+
+        // Subscribe to auth state changes
+        AuthService.OnAuthenticationStateChanged += OnAuthStateChanged;
+
+        // Handle redirects
+        await HandleAuthRedirect();
+    }
+
+    private async void OnAuthStateChanged()
+    {
+        _isAuthenticated = await AuthService.IsAuthenticatedAsync();
+        InvokeAsync(StateHasChanged);
+        await HandleAuthRedirect();
+    }
+
+    private async Task HandleAuthRedirect()
+    {
+        if (_isLoading) return;
+
+        var currentPath = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        
+        if (RequireAuth && !_isAuthenticated)
+        {
+            // User needs to be authenticated but isn't - redirect to login
+            if (currentPath != "login" && currentPath != "signup")
+            {
+                NavigationManager.NavigateTo("/login", true);
+            }
+        }
+        else if (!RequireAuth && _isAuthenticated)
+        {
+            // User is authenticated but trying to access auth pages - redirect to dashboard
+            if (currentPath == "login" || currentPath == "signup")
+            {
+                NavigationManager.NavigateTo("/", true);
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        AuthService.OnAuthenticationStateChanged -= OnAuthStateChanged;
+    }
+}
+
+@if (_isLoading)
+{
+    <div class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Loading...</p>
+    </div>
+}
+else if ((RequireAuth && _isAuthenticated) || (!RequireAuth && !_isAuthenticated))
+{
+    @ChildContent
+}
+
+<style>
+    .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 50vh;
+        gap: 1rem;
+    }
+
+    .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #3498db;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @@keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style> 

@@ -1,0 +1,569 @@
+﻿@using parlayrunner.Shared.ViewModels;
+@inherits LayoutComponentBase
+@inject HomeViewModel ViewModel
+
+
+@if (_isMenuOpen)
+{
+    <div class="menu-backdrop" @onclick="CloseMenu"></div>
+    <div class="side-menu @(_isMenuOpen ? "open" : "")">
+        <div class="menu-content">
+            <a href="profile" class="menu-item">
+                <i class="fas fa-user-circle"></i>
+                <span>About</span>
+            </a>
+            <a href="settings" class="menu-item">
+                <i class="fas fa-cog"></i>
+                <span>Terms and Conditions</span>
+            </a>
+            <div class="menu-item" @onclick="() => { /* Add logout logic */ }">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Contact</span>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="page">
+    <header class="top-nav">
+        @if (IsMain())
+        {
+            <div class="nav-left">
+                <button class="menu-button" @onclick="MenuClick">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <button class="search-button">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+            <div class="nav-center">
+                <span class="brand-text">parlay runner</span>
+            </div>
+            <div class="nav-right" @onclick='() => NavigationManager.NavigateTo($"/login")'>
+                <span class="user-info">
+                    <i class="fas fa-user"></i>
+                    Toby M..
+                </span>
+            </div>
+        }
+        else
+        {
+            <div class="nav-left">
+                <button class="back-button" @onclick="NavigateBack">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            </div>
+            <div class="nav-center">
+                <span class="brand-text">@GetCurrentCategory()</span>
+            </div>
+            <div class="nav-right">
+                <span class="user-info">
+                    <i class="fas fa-user"></i>
+                    Toby M..
+                </span>
+            </div>
+        }
+    </header>
+
+    <main>
+        <div class="content">
+            @Body
+        </div>
+    </main>
+
+    <div class="parlay-panel @(_isParlayExpanded ? "expanded" : "")">
+        <button class="parlay-header" @onclick="ToggleParlay">
+            <i class="fas @(_isParlayExpanded ? "fa-chevron-down" : "fa-chevron-up")"></i>
+            <span style="font-weight: 600; font-style: italic; text-align: center;">PARLAY</span>
+        </button>
+
+        @if (_isParlayExpanded)
+        {
+            <div class="parlay-content">
+
+                <div class="parlay-tabs">
+                    <button class="tab-button @(_selectedTab == "triple" ? "active" : "")"
+                            @onclick='() => SelectTab("triple")'>
+                        1x TRIPPLE
+                    </button>
+                    <button class="tab-button @(_selectedTab == "singles" ? "active" : "")"
+                            @onclick='() => SelectTab("singles")'>
+                        Singles
+                    </button>
+                    <button class="tab-button @(_selectedTab == "systems" ? "active" : "")"
+                            @onclick='() => SelectTab("systems")'>
+                        Systems
+                    </button>
+                </div>
+
+                    <div class="bet-list">
+                        @foreach (var match in ViewModel._parlayService.CurrentParlay.Matches)
+                        {
+                            <div class="bet-item">
+
+                                <button class="remove-bet" @onclick="() => ViewModel._parlayService.RemoveMatchFromParlay(match.Id)">
+                                    <i class="fas fa-times"></i>
+                                </button>
+
+                                <div style="margin-top: 10px; margin-bottom: 10px;">
+                                    <div class="team-label">@match.HomeTeam</div>
+                                    <div class="team-label">@match.AwayTeam</div>
+                                    <div style="margin-top: 3px;" class="bet-type">
+                                            @switch (match.SelectedBetType)
+                                                {
+                                                    case "1":
+                                                        <span style="font-size: 12px;">Winner</span>
+                                                        <div>
+                                                            <span class="team-and-odds">@match.AwayTeam - @match.SelectedOdds</span>
+                                                        </div>
+                                                        break;
+                                                    case "X":
+                                                        <span style="font-size: 12px;">Draw</span>
+                                                        <div>
+                                                            <span class="team-and-odds">@match.SelectedOdds</span>
+                                                        </div>
+                                                        break;
+                                                    case "2":
+                                                        <span style="font-size:12px;">Winner</span>
+                                                        <div>
+                                                            <span class="team-and-odds">@match.AwayTeam - @match.SelectedOdds</span>
+                                                        </div>
+                                                        break;
+                                                }
+
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                </div>
+
+                    <div class="parlay-button-container">
+                        <button class="run-parlay-button" @onclick='() => NavigationManager.NavigateTo($"/parlayview")'>
+                            RUN YOUR PARLAY
+                        </button>
+                    </div>
+            </div>
+        }
+    </div>
+
+    <div class="nav-background">
+        <nav class="bottom-nav">
+            <a href="" class="nav-item @(IsActive("/") ? "active" : "")">
+                <i class="fas fa-home"></i>
+                <span>Home</span>
+            </a>
+            <a href="parlays" class="nav-item @(IsActive("/parlays") ? "active" : "")">
+                <i class="fas fa-list"></i>
+                <span>My Parlays</span>
+            </a>
+            <a href="today" class="nav-item @(IsActive("/today") ? "active" : "")">
+                <i class="fas fa-calendar-day"></i>
+                <span>Today</span>
+            </a>
+        </nav>
+    </div>
+
+</div>
+
+<style>
+
+    .tab-button {
+        background: none;
+        border: none;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        cursor: pointer;
+        align-content:center;
+        font-size: 11px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+        .tab-button.active {
+            background-color: rgba(255, 255, 255, 0.2);
+            font-weight: 600;
+        }
+
+        .tab-button:hover:not(.active) {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+
+    .parlay-panel {
+        position: fixed;
+        bottom: 90px;
+        left: 0;
+        right: 0;
+        background-color: #C161DC;
+        transition: height 0.3s ease-in-out;
+        height: 48px;
+        z-index: 1000;
+    }
+
+        .parlay-panel.expanded {
+            height: 400px;
+        }
+
+    .parlay-header {
+        width: 100%;
+        height: 48px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0 16px;
+        color: white;
+        font-weight: 500;
+        background: none;
+        border: none;
+        cursor: pointer;
+        position: relative;
+    }
+
+        .parlay-header i {
+            position: absolute;
+            left: 16px;
+        }
+
+    .parlay-content {
+        background-color: white;
+        height: calc(100% - 48px);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .parlay-tabs {
+        display: flex;
+        justify-content: center;
+        background-color: #8E47C2;
+        padding: 8px 16px;
+        gap: 16px;
+    }
+
+    .parlay-item {
+        flex: 1;
+        padding: 16px;
+    }
+
+        .parlay-item h3 {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+    .bet-list {
+        padding: 16px 0px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .bet-item {
+        display: flex;
+        align-items: center;
+        color: #333;
+        border-bottom: 1px solid #eee;
+    }
+
+    .parlay-button-container {
+        padding: 16px;
+        background-color: #282828;
+        border-top: 1px solid #eee;
+        margin-top: auto;
+    }
+
+    .run-parlay-button {
+        width: 100%;
+        background-color: white;
+        color: black;
+        padding: 10px;
+        border-radius: 8px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        font-style: italic;
+    }
+
+    .page {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        background-color: #1a1a1a;
+    }
+
+    .top-nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 100px;
+        background-color: #2d2d2d;
+        display: flex;
+        justify-content: space-between;
+        padding-top: 50px;
+        padding-left: 15px;
+        padding-right: 15px;
+        align-items: center;
+        color: white;
+        z-index: 1000;
+    }
+
+    .category-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        width: 100%;
+    }
+
+    .back-button {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 20px;
+        cursor: pointer;
+        padding: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .category-title {
+        font-size: 18px;
+        font-weight: 500;
+        color: white;
+    }
+
+    .nav-left {
+        display: flex;
+        gap: 16px;
+    }
+
+    .nav-center {
+        font-size: 18px;
+        font-weight: 500;
+    }
+
+    .nav-right {
+        font-size: 14px;
+    }
+
+    .menu-button, .search-button {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 18px;
+        cursor: pointer;
+        padding: 8px;
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    main {
+        flex: 1;
+        margin-top: 50px;
+        margin-bottom: 60px;
+        overflow-y: auto;
+    }
+
+    .content {
+        height: 100%;
+    }
+
+    .fas {
+    }
+
+    .nav-background {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: #2d2d2d;
+        padding-top: 1px;
+    }
+
+    .bottom-nav {
+        height: 90px;
+        background-color: #1a1a1a;
+        display: flex;
+        justify-content: space-around;
+        padding-bottom: 50px;
+        align-items: center;
+        padding: 0 10px;
+    }
+
+    .nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        color: #ffffff;
+        text-decoration: none;
+        padding: 6px;
+        flex: 1;
+        gap: 6px;
+    }
+
+        .nav-item i {
+            font-size: 20px; /* Reduced from 24px */
+            margin-bottom: 2px; /* Reduced from 4px */
+        }
+
+        .nav-item span {
+            font-size: 12px; /* Slightly reduced from 12px */
+        }
+
+        .nav-item.active {
+            color: #9146ff;
+        }
+
+    .remove-bet
+    {
+        color: red;
+        background-color: transparent;
+    }
+
+    .team-and-odds
+    {
+        font-size:13px;
+        font-weight:600;
+    }
+
+    .team-label
+    {
+        font-size: 15px;
+        font-weight: 500;
+    }
+
+
+    .menu-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1001;
+    }
+
+    .side-menu {
+        position: fixed;
+        left: 0;
+        height: 100vh;
+        width: 280px;
+        background-color: #2d2d2d;
+        z-index: 1002;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .side-menu.open {
+        transform: translateX(0);
+    }
+
+    .menu-header {
+        height: 100px;
+        padding: 50px 16px 16px;
+        background-color: #1a1a1a;
+        color: white;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .menu-content {
+        padding: 16px;
+    }
+
+    .menu-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        color: white;
+        text-decoration: none;
+        gap: 12px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .menu-item:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+</style>
+
+@code {
+    [Inject]
+    private NavigationManager NavigationManager { get; set; }
+    private string _selectedTab = "triple";
+    private bool _isMenuOpen = false;
+    private bool _isParlayExpanded = false;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        // Subscribe to bet changes
+        ViewModel._parlayService.OnBetsChanged += OnBetsChanged;
+    }
+
+    private void SelectTab(string tab)
+    {
+        _selectedTab = tab;
+        ViewModel._parlayService.CurrentParlay.Type = tab;
+        StateHasChanged();
+    }
+
+    private void OnBetsChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void MenuClick()
+    {
+        _isMenuOpen = !_isMenuOpen;
+        StateHasChanged();
+    }
+
+    private void CloseMenu()
+    {
+        _isMenuOpen = false;
+        StateHasChanged();
+    }
+
+    protected void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            // Unsubscribe to prevent memory leaks
+            ViewModel._parlayService.OnBetsChanged -= OnBetsChanged;
+        }
+    }
+
+    private bool IsMain()
+    {
+        return NavigationManager.Uri.EndsWith("/") || NavigationManager.Uri.Contains("parlays") || NavigationManager.Uri.Contains("today");
+    }
+
+    private bool IsActive(string path)
+    {
+        return NavigationManager.Uri.EndsWith(path);
+    }
+
+    private void NavigateBack()
+    {
+        NavigationManager.NavigateTo("javascript:history.go(-1)");
+    }
+
+    private string GetCurrentCategory()
+    {
+        var uri = NavigationManager.Uri;
+        return uri.Split('/').Last(x => !string.IsNullOrEmpty(x));
+    }
+
+    private void ToggleParlay()
+    {
+        _isParlayExpanded = !_isParlayExpanded;
+    }
+}

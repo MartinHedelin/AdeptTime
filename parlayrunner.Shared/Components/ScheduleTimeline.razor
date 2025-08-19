@@ -1,0 +1,330 @@
+@using parlayrunner.Shared.Models
+
+<div class="schedule-timeline">
+    <!-- Time Header -->
+    <div class="timeline-header">
+        <div class="employee-column-header">Medarbejder</div>
+        <div class="time-grid-header">
+            @for (int hour = 5; hour <= 21; hour++)
+            {
+                <div class="time-slot-header">
+                    @($"{hour:00}:00")
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Employee Groups and Timeline -->
+    <div class="timeline-content">
+        @foreach (var group in EmployeeGroups)
+        {
+            <!-- Group Header -->
+            <div class="group-header" @onclick="() => ToggleGroup(group)">
+                <i class="fas @(group.IsExpanded ? "fa-chevron-down" : "fa-chevron-right") group-toggle"></i>
+                <span class="group-name">@group.Name</span>
+            </div>
+
+            <!-- Group Employees -->
+            @if (group.IsExpanded)
+            {
+                @foreach (var employee in group.Employees)
+                {
+                    <div class="employee-row">
+                        <!-- Employee Info Column -->
+                        <div class="employee-info">
+                            <img src="@employee.AvatarUrl" alt="@employee.Name" class="employee-avatar" />
+                            <div class="employee-details">
+                                <div class="employee-name">@employee.Name</div>
+                                <div class="employee-team">@employee.Team</div>
+                            </div>
+                        </div>
+
+                        <!-- Timeline Grid -->
+                        <div class="timeline-grid">
+                            @for (int hour = 5; hour <= 21; hour++)
+                            {
+                                <div class="time-slot">
+                                    @{
+                                        var scheduleEntry = GetScheduleForEmployeeAtHour(employee.Id, hour);
+                                    }
+                                    @if (scheduleEntry != null)
+                                    {
+                                        var (startCol, span) = CalculateSchedulePosition(scheduleEntry, hour);
+                                        @if (startCol == hour)
+                                        {
+                                            <div class="schedule-block" style="grid-column: span @span;">
+                                                <div class="schedule-content">
+                                                    <div class="schedule-customer">@scheduleEntry.Customer.Name</div>
+                                                    <div class="schedule-time">
+                                                        @scheduleEntry.StartTime.ToString(@"hh\:mm") - @scheduleEntry.EndTime.ToString(@"hh\:mm")
+                                                    </div>
+                                                    @if (!string.IsNullOrEmpty(scheduleEntry.Location))
+                                                    {
+                                                        <div class="schedule-location">@scheduleEntry.Location</div>
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        }
+    </div>
+</div>
+
+<style>
+    .schedule-timeline {
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    }
+
+    .timeline-header {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        background: #F9FAFB;
+        border-bottom: 2px solid #E5E7EB;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .employee-column-header {
+        padding: 16px 20px;
+        font-weight: 600;
+        color: #374151;
+        border-right: 1px solid #E5E7EB;
+        display: flex;
+        align-items: center;
+    }
+
+    .time-grid-header {
+        display: grid;
+        grid-template-columns: repeat(17, 1fr);
+        gap: 1px;
+    }
+
+    .time-slot-header {
+        padding: 16px 8px;
+        text-align: center;
+        font-size: 12px;
+        font-weight: 500;
+        color: #6B7280;
+        border-right: 1px solid #E5E7EB;
+    }
+
+    .timeline-content {
+        max-height: 600px;
+        overflow-y: auto;
+    }
+
+    .group-header {
+        display: flex;
+        align-items: center;
+        padding: 12px 20px;
+        background: #F3F4F6;
+        border-bottom: 1px solid #E5E7EB;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+    .group-header:hover {
+        background: #E5E7EB;
+    }
+
+    .group-toggle {
+        margin-right: 8px;
+        color: #6B7280;
+        font-size: 12px;
+        transition: transform 0.2s ease;
+    }
+
+    .group-name {
+        font-weight: 600;
+        color: #374151;
+        font-size: 14px;
+    }
+
+    .employee-row {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        border-bottom: 1px solid #F3F4F6;
+        min-height: 60px;
+    }
+
+    .employee-row:hover {
+        background: #F9FAFB;
+    }
+
+    .employee-info {
+        display: flex;
+        align-items: center;
+        padding: 12px 20px;
+        border-right: 1px solid #E5E7EB;
+        gap: 12px;
+    }
+
+    .employee-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #E5E7EB;
+    }
+
+    .employee-details {
+        flex: 1;
+    }
+
+    .employee-name {
+        font-weight: 500;
+        color: #111827;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+
+    .employee-team {
+        color: #6B7280;
+        font-size: 12px;
+        line-height: 1.3;
+    }
+
+    .timeline-grid {
+        display: grid;
+        grid-template-columns: repeat(17, 1fr);
+        gap: 1px;
+        position: relative;
+    }
+
+    .time-slot {
+        border-right: 1px solid #F3F4F6;
+        min-height: 60px;
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .schedule-block {
+        background: #10B981;
+        border-radius: 4px;
+        margin: 4px 2px;
+        padding: 6px 8px;
+        color: white;
+        font-size: 11px;
+        line-height: 1.3;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .schedule-content {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .schedule-customer {
+        font-weight: 600;
+        font-size: 11px;
+    }
+
+    .schedule-time {
+        font-size: 10px;
+        opacity: 0.9;
+    }
+
+    .schedule-location {
+        font-size: 10px;
+        opacity: 0.8;
+        font-style: italic;
+    }
+
+    /* Responsive adjustments */
+    @@media (max-width: 1400px) {
+        .timeline-header {
+            grid-template-columns: 250px 1fr;
+        }
+
+        .employee-row {
+            grid-template-columns: 250px 1fr;
+        }
+
+        .time-slot-header {
+            padding: 12px 4px;
+            font-size: 11px;
+        }
+    }
+
+    @@media (max-width: 1200px) {
+        .employee-info {
+            padding: 10px 16px;
+        }
+
+        .employee-avatar {
+            width: 32px;
+            height: 32px;
+        }
+
+        .time-grid-header {
+            grid-template-columns: repeat(17, minmax(40px, 1fr));
+        }
+
+        .timeline-grid {
+            grid-template-columns: repeat(17, minmax(40px, 1fr));
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .timeline-header {
+            grid-template-columns: 200px 1fr;
+        }
+
+        .employee-row {
+            grid-template-columns: 200px 1fr;
+        }
+
+        .schedule-block {
+            font-size: 10px;
+            padding: 4px 6px;
+        }
+    }
+</style>
+
+@code {
+    [Parameter] public List<EmployeeGroup> EmployeeGroups { get; set; } = new();
+    [Parameter] public List<ScheduleEntry> ScheduleEntries { get; set; } = new();
+    [Parameter] public DateTime SelectedDate { get; set; } = DateTime.Today;
+    [Parameter] public EventCallback<EmployeeGroup> OnGroupToggled { get; set; }
+
+    private void ToggleGroup(EmployeeGroup group)
+    {
+        group.IsExpanded = !group.IsExpanded;
+        OnGroupToggled.InvokeAsync(group);
+    }
+
+    private ScheduleEntry? GetScheduleForEmployeeAtHour(int employeeId, int hour)
+    {
+        return ScheduleEntries
+            .Where(s => s.Employee.Id == employeeId && 
+                       s.Date.Date == SelectedDate.Date &&
+                       s.StartTime.Hours <= hour && 
+                       s.EndTime.Hours > hour)
+            .FirstOrDefault();
+    }
+
+    private (int startCol, int span) CalculateSchedulePosition(ScheduleEntry schedule, int currentHour)
+    {
+        var startHour = Math.Max(5, schedule.StartTime.Hours);
+        var endHour = Math.Min(22, schedule.EndTime.Hours + (schedule.EndTime.Minutes > 0 ? 1 : 0));
+        
+        var startCol = startHour;
+        var span = endHour - startHour;
+        
+        return (startCol, Math.Max(1, span));
+    }
+} 

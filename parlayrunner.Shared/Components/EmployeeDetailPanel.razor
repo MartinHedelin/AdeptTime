@@ -1,0 +1,790 @@
+@using parlayrunner.Shared.Models
+@using parlayrunner.Shared.Components
+
+<div class="employee-detail-page @(IsVisible ? "visible" : "")">
+    <!-- Employee Header -->
+    <div class="detail-header">
+        <button class="close-btn" @onclick="OnClose">
+            <i class="fas fa-times"></i>
+        </button>
+        
+        <div class="header-left">
+            <img src="@Employee?.AvatarUrl" alt="@Employee?.Name" class="header-avatar" />
+            <div class="employee-details">
+                <h2 class="employee-name">@Employee?.Name</h2>
+                <p class="employee-team">@Employee?.Team</p>
+                <div class="contact-info">
+                    <div class="contact-row">
+                        <span class="contact-label">Telefon</span>
+                        <span class="contact-value">+45 87654555</span>
+                    </div>
+                    <div class="contact-row">
+                        <span class="contact-label">Mail</span>
+                        <span class="contact-value">@(Employee?.Name?.Replace(" ", "").ToLower())@@gmail.com</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="header-right">
+            <div class="stat-card green">
+                <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">@TotalHoursNumber</div>
+                    <div class="stat-text">Time total</div>
+                </div>
+            </div>
+            <div class="stat-card blue">
+                <div class="stat-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">98%</div>
+                    <div class="stat-text">Fremmødt til tiden</div>
+                </div>
+            </div>
+            <div class="stat-card purple">
+                <div class="stat-icon">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">2%</div>
+                    <div class="stat-text">Forsinket/femmede</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Bar (reusing existing pattern) -->
+    <div class="filter-bar">
+        <div class="filter-left">
+            <div class="filter-group">
+                <select class="filter-select">
+                    <option value="42">Week 42</option>
+                    <option value="41">Week 41</option>
+                    <option value="43">Week 43</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <button class="date-picker-btn">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <span class="date-display">22 January 2022</span>
+                <button class="date-picker-btn">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+        <div class="filter-right">
+            <button class="filter-btn afventer">Afventer</button>
+            <button class="edit-btn">Rediger</button>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="page-content">
+        <!-- Time Entries Table (reusing table patterns) -->
+        <div class="table-container">
+            <div class="table-wrapper">
+                <table class="time-detail-table">
+                    <thead>
+                        <tr>
+                            <th class="checkbox-col"></th>
+                            <th>Dato</th>
+                            <th>Registrerede timer</th>
+                            <th>Timebank</th>
+                            <th>1. overarbejde</th>
+                            <th>2. overarbejde</th>
+                            <th>Helligdag</th>
+                            <th>Total timer</th>
+                            <th>Godkend/Afvis</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (TimeEntries != null)
+                        {
+                            @foreach (var entry in TimeEntries.OrderBy(e => e.Date))
+                            {
+                                <tr class="table-row @(entry.Status == TimeEntryStatus.Afvist ? "selected" : "")">
+                                    <td class="checkbox-col">
+                                        <input type="checkbox" class="table-checkbox" checked="@(entry.Status == TimeEntryStatus.Afvist)" />
+                                    </td>
+                                    <td class="date-col">@entry.Date.ToString("dd MMMM yyyy")</td>
+                                    <td class="time-range-col">@entry.CheckIn.ToString(@"hh\:mm") - @entry.CheckOut.ToString(@"hh\:mm")</td>
+                                    <td class="timebank-col">
+                                        <span class="timebank-badge @GetTimeBankClass(entry.TimeBank)">
+                                            @FormatTimeBank(entry.TimeBank)
+                                        </span>
+                                    </td>
+                                    <td class="hours-col">@FormatTotalHours(entry.TotalHours)</td>
+                                    <td class="hours-col">@FormatTotalHours(entry.TotalHours)</td>
+                                    <td class="hours-col">@FormatTotalHours(entry.TotalHours)</td>
+                                    <td class="hours-col">@FormatTotalHours(entry.TotalHours)</td>
+                                    <td class="status-col">
+                                        <select class="status-dropdown @GetStatusClass(entry.Status)" @onchange="@((e) => UpdateStatus(entry.Id, e.Value?.ToString()))">
+                                            <option value="Afventer" selected="@(entry.Status == TimeEntryStatus.Afventer)">Afventer</option>
+                                            <option value="Godkendt" selected="@(entry.Status == TimeEntryStatus.Godkendt)">Godkendt</option>
+                                            <option value="Afvist" selected="@(entry.Status == TimeEntryStatus.Afvist)">Afvist</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination (reusing existing pattern) -->
+    <div class="pagination-wrapper">
+        <div class="pagination-controls">
+            <button class="pagination-btn">
+                <i class="fas fa-chevron-left"></i>
+                Previous
+            </button>
+            <div class="page-numbers">
+                <button class="page-btn active">1</button>
+                <button class="page-btn">2</button>
+                <button class="page-btn">3</button>
+                <button class="page-btn">4</button>
+                <span class="page-dots">...</span>
+                <button class="page-btn">8</button>
+                <button class="page-btn">9</button>
+            </div>
+            <button class="pagination-btn">
+                Next
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Main page layout - filling content area properly */
+    .employee-detail-page {
+        position: fixed;
+        top: 0;
+        left: 280px; /* Leave space for left navigation (280px sidebar width) */
+        right: 0;
+        bottom: 0;
+        background-color: #f8f9fa;
+        z-index: 1000;
+        display: none;
+        flex-direction: column;
+        overflow-y: auto;
+    }
+
+    .employee-detail-page.visible {
+        display: flex;
+    }
+
+    /* Header Section - Match Reference Design Exactly */
+    .detail-header {
+        background: white;
+        padding: 24px 30px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid #e9ecef;
+        position: relative;
+    }
+
+    .close-btn {
+        position: absolute;
+        top: 16px;
+        right: 20px;
+        background: none;
+        border: none;
+        font-size: 18px;
+        color: #6c757d;
+        cursor: pointer;
+        padding: 4px;
+        z-index: 10;
+    }
+
+    .close-btn:hover {
+        color: #495057;
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .header-avatar {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .employee-details {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .employee-name {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 600;
+        color: #212529;
+        line-height: 1.2;
+    }
+
+    .employee-team {
+        margin: 0;
+        font-size: 14px;
+        color: #6c757d;
+        font-weight: 500;
+    }
+
+    .contact-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-top: 4px;
+    }
+
+    .contact-row {
+        display: flex;
+        gap: 8px;
+        font-size: 13px;
+    }
+
+    .contact-label {
+        font-weight: 600;
+        color: #495057;
+        min-width: 50px;
+    }
+
+    .contact-value {
+        color: #6c757d;
+    }
+
+    .header-right {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .stat-card {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        border-radius: 8px;
+        min-width: 120px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-card.green {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        border: 1px solid #c3e6cb;
+    }
+
+    .stat-card.blue {
+        background: linear-gradient(135deg, #cce7ff 0%, #b3d9ff 100%);
+        border: 1px solid #b3d9ff;
+    }
+
+    .stat-card.purple {
+        background: linear-gradient(135deg, #e2d9f3 0%, #d1c4e9 100%);
+        border: 1px solid #d1c4e9;
+    }
+
+    .stat-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+
+    .stat-card.green .stat-icon {
+        background: #28a745;
+        color: white;
+    }
+
+    .stat-card.blue .stat-icon {
+        background: #007bff;
+        color: white;
+    }
+
+    .stat-card.purple .stat-icon {
+        background: #6f42c1;
+        color: white;
+    }
+
+    .stat-content {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .stat-number {
+        font-size: 20px;
+        font-weight: 700;
+        color: #212529;
+        line-height: 1;
+    }
+
+    .stat-text {
+        font-size: 11px;
+        color: #495057;
+        font-weight: 500;
+        line-height: 1;
+    }
+
+    /* Filter Bar - reusing existing styles */
+    .filter-bar {
+        background: white;
+        padding: 16px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #e9ecef;
+        gap: 20px;
+    }
+
+    .filter-left, .filter-right {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .filter-select {
+        padding: 8px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        font-size: 14px;
+        background: white;
+        cursor: pointer;
+        min-width: 120px;
+    }
+
+    .date-picker-btn {
+        padding: 8px 10px;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        background: white;
+        cursor: pointer;
+        color: #6c757d;
+        font-size: 12px;
+    }
+
+    .date-display {
+        font-size: 14px;
+        font-weight: 500;
+        color: #495057;
+        padding: 0 12px;
+    }
+
+    .filter-btn {
+        padding: 8px 20px;
+        border: none;
+        background: #007bff;
+        color: white;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .filter-btn:hover {
+        background: #0056b3;
+        transform: translateY(-1px);
+    }
+
+    .edit-btn {
+        padding: 8px 20px;
+        border: none;
+        background: #6f42c1;
+        color: white;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .edit-btn:hover {
+        background: #5a2d8a;
+        transform: translateY(-1px);
+    }
+
+    /* Page Content - reusing existing pattern */
+    .page-content {
+        padding: 24px 32px;
+        flex: 1;
+    }
+
+    /* Table Container - reusing existing table styles */
+    .table-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+    }
+
+    .time-detail-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        min-width: 1200px;
+    }
+
+    .time-detail-table thead {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .time-detail-table th {
+        padding: 16px 12px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 14px;
+        color: #495057;
+        border-right: 1px solid #e9ecef;
+    }
+
+    .time-detail-table th:last-child {
+        border-right: none;
+    }
+
+    .table-row {
+        border-bottom: 1px solid #e9ecef;
+        transition: background-color 0.2s ease;
+    }
+
+    .table-row:hover {
+        background-color: #f8f9fa;
+    }
+
+    .table-row.selected {
+        background-color: #e3f2fd;
+    }
+
+    .time-detail-table td {
+        padding: 16px 12px;
+        vertical-align: middle;
+        border-right: 1px solid #e9ecef;
+        font-size: 14px;
+    }
+
+    .time-detail-table td:last-child {
+        border-right: none;
+    }
+
+    .checkbox-col {
+        width: 50px;
+        text-align: center;
+    }
+
+    .table-checkbox {
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+    }
+
+    .date-col {
+        font-weight: 500;
+        color: #495057;
+        min-width: 140px;
+    }
+
+    .time-range-col {
+        color: #6c757d;
+        min-width: 120px;
+    }
+
+    .timebank-col {
+        text-align: center;
+        min-width: 100px;
+    }
+
+    .timebank-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+        display: inline-block;
+    }
+
+    .timebank-badge.positive {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .timebank-badge.negative {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .timebank-badge.zero {
+        background: #e9ecef;
+        color: #6c757d;
+    }
+
+    .hours-col {
+        text-align: center;
+        color: #6c757d;
+        min-width: 100px;
+    }
+
+    .status-col {
+        min-width: 120px;
+    }
+
+    .status-dropdown {
+        padding: 6px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        background: white;
+        cursor: pointer;
+        width: 100%;
+    }
+
+    .status-dropdown.pending {
+        color: #856404;
+        background-color: #fff3cd;
+        border-color: #ffeaa7;
+    }
+
+    .status-dropdown.approved {
+        color: #155724;
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+    }
+
+    .status-dropdown.rejected {
+        color: #721c24;
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+    }
+
+    /* Pagination - improved styling */
+    .pagination-wrapper {
+        background: white;
+        padding: 20px 32px;
+        border-top: 1px solid #e9ecef;
+        margin-top: auto; /* Push to bottom */
+    }
+
+    .pagination-controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .pagination-btn {
+        padding: 10px 16px;
+        border: 1px solid #ced4da;
+        background: white;
+        color: #495057;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .pagination-btn:hover {
+        background: #f8f9fa;
+        border-color: #007bff;
+        color: #007bff;
+    }
+
+    .pagination-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .page-numbers {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .page-btn {
+        padding: 10px 14px;
+        border: 1px solid #ced4da;
+        background: white;
+        color: #495057;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        min-width: 44px;
+        height: 44px;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+
+    .page-btn.active {
+        background: #007bff;
+        color: white;
+        border-color: #007bff;
+        box-shadow: 0 2px 4px rgba(0, 123, 255, 0.25);
+    }
+
+    .page-btn:hover:not(.active) {
+        background: #f8f9fa;
+        border-color: #007bff;
+        color: #007bff;
+    }
+
+    .page-dots {
+        color: #6c757d;
+        padding: 0 8px;
+        font-weight: 500;
+    }
+
+    @@media (max-width: 768px) {
+        .employee-detail-page {
+            left: 0; /* Full width on mobile since sidebar is hidden */
+        }
+
+        .header-content {
+            flex-direction: column;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .employee-stats {
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .stat-card {
+            min-width: auto;
+        }
+
+        .filter-bar {
+            flex-direction: column;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .page-content {
+            padding: 16px 20px;
+        }
+
+        .pagination-controls {
+            flex-direction: column;
+            gap: 12px;
+        }
+    }
+</style>
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public Employee? Employee { get; set; }
+    [Parameter] public List<TimeEntry>? TimeEntries { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<TimeEntry> OnStatusChanged { get; set; }
+
+    private string TotalHours
+    {
+        get
+        {
+            if (TimeEntries == null || !TimeEntries.Any()) return "0h 0m";
+            var total = TimeEntries.Aggregate(TimeSpan.Zero, (sum, entry) => sum + entry.TotalHours);
+            return FormatTotalHours(total);
+        }
+    }
+
+    private string TotalHoursNumber
+    {
+        get
+        {
+            if (TimeEntries == null || !TimeEntries.Any()) return "0";
+            var total = TimeEntries.Aggregate(TimeSpan.Zero, (sum, entry) => sum + entry.TotalHours);
+            return ((int)total.TotalHours).ToString();
+        }
+    }
+
+    private string TotalTimeBank
+    {
+        get
+        {
+            if (TimeEntries == null || !TimeEntries.Any()) return "0h 0m";
+            var total = TimeEntries.Aggregate(TimeSpan.Zero, (sum, entry) => sum + entry.TimeBank);
+            return FormatTimeBank(total);
+        }
+    }
+
+    private string FormatTotalHours(TimeSpan totalHours)
+    {
+        return $"{(int)totalHours.TotalHours}h {totalHours.Minutes}m";
+    }
+
+    private string FormatTimeBank(TimeSpan timeBank)
+    {
+        if (timeBank == TimeSpan.Zero)
+            return "0h 0m";
+        
+        var sign = timeBank.TotalMinutes < 0 ? "-" : "";
+        var hours = Math.Abs((int)timeBank.TotalHours);
+        var minutes = Math.Abs(timeBank.Minutes);
+        
+        return $"{sign}{hours}h {minutes}m";
+    }
+
+    private string GetTimeBankClass(TimeSpan timeBank)
+    {
+        if (timeBank.TotalMinutes > 0) return "positive";
+        if (timeBank.TotalMinutes < 0) return "negative";
+        return "zero";
+    }
+
+    private string GetStatusClass(TimeEntryStatus status)
+    {
+        return status switch
+        {
+            TimeEntryStatus.Afventer => "pending",
+            TimeEntryStatus.Godkendt => "approved",
+            TimeEntryStatus.Afvist => "rejected",
+            _ => "pending"
+        };
+    }
+
+    private async Task UpdateStatus(int entryId, string? newStatus)
+    {
+        if (string.IsNullOrEmpty(newStatus)) return;
+
+        var entry = TimeEntries?.FirstOrDefault(e => e.Id == entryId);
+        if (entry != null && Enum.TryParse<TimeEntryStatus>(newStatus, out var status))
+        {
+            entry.Status = status;
+            await OnStatusChanged.InvokeAsync(entry);
+        }
+    }
+}

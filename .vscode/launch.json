@@ -1,0 +1,39 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "🚀 Launch Blazor WebAssembly",
+            "type": "blazorwasm",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/parlayrunner.Web",
+            "browser": "chrome",
+            "url": "http://localhost:5226",
+            "webRoot": "${workspaceFolder}/parlayrunner.Web/wwwroot",
+            "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
+            "timeout": 30000,
+            "preLaunchTask": "build-web"
+        },
+        {
+            "name": "🌐 Launch Blazor WebAssembly (HTTPS)",
+            "type": "blazorwasm",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/parlayrunner.Web",
+            "browser": "chrome",
+            "url": "https://localhost:7161",
+            "webRoot": "${workspaceFolder}/parlayrunner.Web/wwwroot",
+            "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
+            "timeout": 30000,
+            "preLaunchTask": "build-web"
+        },
+        {
+            "name": "🔧 Attach to running Blazor WebAssembly",
+            "type": "blazorwasm",
+            "request": "attach",
+            "browser": "chrome",
+            "url": "http://localhost:5226",
+            "webRoot": "${workspaceFolder}/parlayrunner.Web/wwwroot",
+            "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}"
+        }
+    ],
+    "compounds": []
+} 

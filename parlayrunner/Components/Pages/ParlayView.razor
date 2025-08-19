@@ -1,0 +1,269 @@
+﻿@page "/parlayview"
+@using parlayrunner.Components.Layout;
+@using parlayrunner.Shared.Models;
+@using parlayrunner.Shared.ViewModels;
+@layout ParlayLayout
+@inject ParlayViewModel ViewModel
+@if (IsLoading)
+    {
+    <div class="loading-screen">
+        <div class="logo-container">
+            <svg width="48" height="48" viewBox="0 0 48 48">
+                <path d="M10 24L22 36L38 12" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+        </div>
+    </div>
+    }
+    else
+    {
+    <div class="parlay-view">
+
+        <div class="header">
+            <i class="fas fa-times close-icon" @onclick="NavigateBack"></i>
+            <div style="font-size: 17px; font-style: italic; font-weight: 600">YOUR PARLAY</div>
+        </div>
+
+        <div class="parlay-details">
+            <div class="bet-section">
+                <h2>@ViewModel._parlayService.CurrentParlay.Type.ToUpper()</h2>
+                @foreach (var match in ViewModel._parlayService.CurrentParlay.Matches)
+                    {
+                    <div class="bet-item">
+                        <span>@GetMatchDescription(match)</span>
+                    </div>
+                    }
+            </div>
+            <div class="wavy-divider"></div>
+        </div>
+
+        <div class="bookmaker-list">
+            <div class="sorted-text">SORTED BY HIGHEST RETURNS</div>
+
+            @if (bookmakers != null)
+                {
+                    foreach (var bookmaker in bookmakers)
+                    {
+                    <div class="bookmaker-item">
+                        <div class="bookmaker-info">
+                            <img src="@bookmaker.Logo" alt="@bookmaker.Name logo" class="bookmaker-logo" />
+                            <div>
+                                <div class="multiplier">X @bookmaker.Multiplier</div>
+                                <span style="text-color: #606060; font-size: 13px;">@bookmaker.Name</span>
+                            </div>
+                        </div>
+                        <button class="go-button" @onclick="() => NavigateToBookmaker(bookmaker.RedirectURL)">GO</button>
+                    </div>
+                    }
+                }
+        </div>
+
+    </div>
+
+    }
+    <style>
+
+        .loading-screen {
+            height: 100vh;
+            background: linear-gradient(180deg, #000103 0%, #1F0B33 50%, #000103 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .logo-container {
+            animation: pulse 2s infinite;
+            color: #34D399;
+            filter: drop-shadow(0 0 15px rgba(52, 211, 153, 0.7));
+        }
+
+        @@keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .parlay-view {
+            background-color: #000103;
+            color: white;
+            padding: 20px;
+        }
+
+        .header {
+            position: relative;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .close-icon {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .parlay-details {
+            border-radius: 12px;
+            color: black;
+            margin-bottom: 20px;
+            position: relative; /* Ensure proper stacking context */
+            overflow: hidden; /* Clip content to container shape */
+        }
+
+        .bet-section {
+            padding: 20px;
+            background-color: white;
+        }
+
+            .bet-section h2 {
+                font-size: 16px;
+                font-weight: bold;
+                margin-bottom: 10px;
+            }
+
+        .bet-item {
+            font-size: 14px;
+            line-height: 1.5;
+            color: #5F5F5B;
+        }
+
+        .wavy-divider {
+            height: 10px; /* Adjust the height of the divider */
+            background: white; /* Use a white background */
+            margin: 0; /* Remove extra margin to align it flush */
+            clip-path: polygon( 0 0, 2.5% 100%, 5% 0, 7.5% 100%, 10% 0, 12.5% 100%, 15% 0, 17.5% 100%, 20% 0, 22.5% 100%, 25% 0, 27.5% 100%, 30% 0, 32.5% 100%, 35% 0, 37.5% 100%, 40% 0, 42.5% 100%, 45% 0, 47.5% 100%, 50% 0, 52.5% 100%, 55% 0, 57.5% 100%, 60% 0, 62.5% 100%, 65% 0, 67.5% 100%, 70% 0, 72.5% 100%, 75% 0, 77.5% 100%, 80% 0, 82.5% 100%, 85% 0, 87.5% 100%, 90% 0, 92.5% 100%, 95% 0, 97.5% 100%, 100% 0 );
+        }
+
+        .bookmaker-list {
+            margin-top: 30px;
+        }
+
+        .sorted-text {
+            color: #666;
+            font-size: 12px;
+            align-items: center;
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .bookmaker-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            gap: 12px; /* Add spacing between elements */
+        }
+
+
+        .bookmaker-logo {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+        }
+
+        .multiplier {
+            line-height: 1;
+            color: #B65BCF;
+            font-weight: 600;
+            border: 1px solid #B65BCF;
+            border-radius: 12px;
+            padding: 0px 6px;
+            font-style: italic;
+            width: fit-content;
+            text-align: center;
+        }
+
+        .bookmaker-info {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex: 1;
+        }
+
+            .bookmaker-info > div {
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+            }
+
+        .go-button {
+            background-color: white;
+            color: black;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 16px;
+            font-weight: 600;
+            margin-left: auto;
+            font-size: 15px;
+            font-style: italic;
+            cursor: pointer;
+        }
+    </style>
+
+    @code {
+
+        [Inject]
+        private NavigationManager NavigationManager { get; set; }
+
+        [Parameter]
+        public bool IsLoading { get; set; }
+
+// Add state for bookmakers
+private List<Bookmaker> bookmakers;
+
+    // Add OnInitialized
+    protected override async Task OnInitializedAsync()
+    {
+        IsLoading = true;
+
+        bookmakers = await ViewModel._cloudService.GetBookmakers(
+            ViewModel._parlayService.CurrentParlay.Type,
+            ViewModel._parlayService.CurrentParlay.Matches
+        );
+
+        IsLoading = false;
+    }
+
+    private void NavigateBack()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
+    private void NavigateToBookmaker(string url)
+    {
+        try
+        {
+            var uri = new Uri(url);
+            Browser.Default.OpenAsync(uri);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error opening URL: {ex.Message}");
+        }
+    }
+
+    private string GetMatchDescription(Match match) => match.SelectedBetType switch
+    {
+        "1" => $"1x Winner - {match.HomeTeam} - {match.SelectedOdds}",
+        "X" => $"1x Draw - {match.SelectedOdds} - {match.HomeTeam} - {match.AwayTeam}",
+        "2" => $"1x Winner - {match.AwayTeam} - {match.SelectedOdds}",
+        _ => string.Empty
+    };
+    }

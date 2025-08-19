@@ -1,0 +1,230 @@
+@using parlayrunner.Shared.Models
+
+<div class="team-selector">
+    <button class="team-button" @onclick="ToggleDropdown">
+        <div class="team-info">
+            <div class="team-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="team-details">
+                <span class="team-name">@SelectedTeam</span>
+                <i class="fas fa-chevron-down dropdown-arrow @(isDropdownOpen ? "open" : "")"></i>
+            </div>
+        </div>
+    </button>
+    
+    @if (isDropdownOpen)
+    {
+        <div class="team-dropdown">
+            @foreach (var team in Teams)
+            {
+                <button class="team-option @(team == SelectedTeam ? "active" : "")" 
+                        @onclick="() => SelectTeam(team)">
+                    <div class="option-content">
+                        <div class="option-icon">
+                            <i class="fas @(team == "All" ? "fa-globe" : "fa-users")"></i>
+                        </div>
+                        <span class="option-name">@team</span>
+                        @if (team == SelectedTeam)
+                        {
+                            <i class="fas fa-check option-check"></i>
+                        }
+                    </div>
+                </button>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .team-selector {
+        position: relative;
+        z-index: 100;
+    }
+
+    .team-button {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        padding: 8px 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        width: 100%;
+        color: white;
+        display: flex;
+        align-items: center;
+    }
+
+    .team-button:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .team-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .team-icon {
+        width: 24px;
+        height: 24px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+    }
+
+    .team-details {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex: 1;
+    }
+
+    .team-name {
+        font-size: 14px;
+        font-weight: 500;
+        color: white;
+    }
+
+    .dropdown-arrow {
+        font-size: 10px;
+        transition: transform 0.2s ease;
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .dropdown-arrow.open {
+        transform: rotate(180deg);
+    }
+
+    .team-dropdown {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        z-index: 1000;
+    }
+
+    .team-option {
+        width: 100%;
+        background: none;
+        border: none;
+        padding: 12px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        text-align: left;
+    }
+
+    .team-option:hover {
+        background-color: #f9fafb;
+    }
+
+    .team-option.active {
+        background-color: #f0f9ff;
+    }
+
+    .option-content {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .option-icon {
+        width: 20px;
+        height: 20px;
+        background: #f3f4f6;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        color: #6b7280;
+    }
+
+    .option-name {
+        flex: 1;
+        font-size: 14px;
+        font-weight: 500;
+        color: #374151;
+    }
+
+    .option-check {
+        font-size: 12px;
+        color: #3b82f6;
+    }
+
+    .team-option.active .option-icon {
+        background: #dbeafe;
+        color: #3b82f6;
+    }
+
+    .team-option.active .option-name {
+        color: #1e40af;
+    }
+</style>
+
+@code {
+    [Parameter] public EventCallback<string> OnTeamChanged { get; set; }
+
+    private bool isDropdownOpen = false;
+    private string selectedTeam = "All";
+
+    private List<string> Teams = new()
+    {
+        "All",
+        "Team London", 
+        "Team Dublin",
+        "VVS",
+        "Elektro",
+        "Administration"
+    };
+
+    public string SelectedTeam 
+    { 
+        get => selectedTeam;
+        set
+        {
+            if (selectedTeam != value)
+            {
+                selectedTeam = value;
+                StateHasChanged();
+            }
+        }
+    }
+
+    private void ToggleDropdown()
+    {
+        isDropdownOpen = !isDropdownOpen;
+    }
+
+    private async Task SelectTeam(string team)
+    {
+        selectedTeam = team;
+        isDropdownOpen = false;
+        
+        if (OnTeamChanged.HasDelegate)
+        {
+            await OnTeamChanged.InvokeAsync(team);
+        }
+        
+        StateHasChanged();
+    }
+
+    // Close dropdown when clicking outside
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Add global click handler to close dropdown
+        }
+    }
+}

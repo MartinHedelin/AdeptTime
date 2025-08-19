@@ -1,0 +1,266 @@
+@using Microsoft.AspNetCore.Components
+@using parlayrunner.Shared.Models
+
+<div class="page-header">
+    <div class="header-left">
+        <h1 class="page-title">@Title</h1>
+    </div>
+    <div class="header-right">
+        @if (ShowSearchInput)
+        {
+            <div class="search-container">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" class="search-input" placeholder="@SearchPlaceholder" @bind="searchText" @oninput="OnSearchChanged" />
+            </div>
+        }
+        <button class="filter-button" @onclick="OnFilterClicked">
+            <i class="fas fa-filter"></i>
+            Filter
+        </button>
+        @if (ShowCreateButton)
+        {
+            <div class="create-dropdown-container">
+                <button class="create-button" @onclick="ToggleCreateDropdown">
+                    <i class="fas fa-plus"></i>
+                    @CreateButtonText
+                    <i class="fas fa-chevron-down dropdown-arrow"></i>
+                </button>
+                @if (showCreateDropdown)
+                {
+                    <div class="create-dropdown">
+                        <button class="dropdown-item" @onclick="() => HandleCreateOption(CreateType.Case)">
+                            <i class="fas fa-briefcase"></i>
+                            Opret sag
+                        </button>
+                        <button class="dropdown-item" @onclick="() => HandleCreateOption(CreateType.Employee)">
+                            <i class="fas fa-user-plus"></i>
+                            Tilføj medarbejder
+                        </button>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 24px 32px;
+        background: white;
+        border-bottom: 1px solid #E5E7EB;
+        margin-bottom: 0;
+    }
+
+    .header-left .page-title {
+        font-size: 28px;
+        font-weight: 600;
+        color: #111827;
+        margin: 0;
+    }
+
+    .header-right {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .search-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 12px;
+        color: #6B7280;
+        font-size: 14px;
+        z-index: 1;
+    }
+
+    .search-input {
+        padding: 8px 12px 8px 36px;
+        border: 1px solid #D1D5DB;
+        border-radius: 6px;
+        font-size: 14px;
+        color: #374151;
+        background: #F9FAFB;
+        width: 300px;
+        transition: all 0.2s ease;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: #3B82F6;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .filter-button, .create-button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border: 1px solid #D1D5DB;
+        border-radius: 6px;
+        background: white;
+        color: #374151;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .filter-button:hover {
+        background: #F3F4F6;
+        border-color: #9CA3AF;
+    }
+
+    .create-dropdown-container {
+        position: relative;
+        display: inline-block;
+    }
+
+    .create-button {
+        background: #938FBF;
+        color: white;
+        border-color: #938FBF;
+        position: relative;
+    }
+
+    .create-button:hover {
+        background: #7A75A8;
+        border-color: #7A75A8;
+    }
+
+    .dropdown-arrow {
+        margin-left: 4px;
+        font-size: 10px;
+        transition: transform 0.2s ease;
+    }
+
+    .create-dropdown {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: white;
+        border: 1px solid #D1D5DB;
+        border-radius: 6px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+        min-width: 180px;
+        margin-top: 4px;
+    }
+
+    .dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        padding: 12px 16px;
+        border: none;
+        background: none;
+        color: #374151;
+        font-size: 14px;
+        text-align: left;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+    .dropdown-item:hover {
+        background-color: #F3F4F6;
+    }
+
+    .dropdown-item:first-child {
+        border-radius: 6px 6px 0 0;
+    }
+
+    .dropdown-item:last-child {
+        border-radius: 0 0 6px 6px;
+    }
+
+    .dropdown-item i {
+        font-size: 12px;
+        color: #6B7280;
+    }
+
+    .filter-button i, .create-button i {
+        font-size: 12px;
+    }
+
+    @@media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            gap: 16px;
+            align-items: flex-start;
+            padding: 16px 20px;
+        }
+
+        .header-right {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .search-input {
+            width: 200px;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .header-right {
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .search-input {
+            width: 100%;
+        }
+    }
+</style>
+
+@code {
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string SearchPlaceholder { get; set; } = "Søg...";
+    [Parameter] public bool ShowSearchInput { get; set; } = true;
+    [Parameter] public bool ShowCreateButton { get; set; } = true;
+    [Parameter] public string CreateButtonText { get; set; } = "Opret";
+    [Parameter] public EventCallback OnFilterClicked { get; set; }
+    [Parameter] public EventCallback OnCreateClicked { get; set; }
+    [Parameter] public EventCallback<CreateType> OnCreateOptionSelected { get; set; }
+    [Parameter] public EventCallback<string> OnSearchTextChanged { get; set; }
+
+    private string searchText = string.Empty;
+    private bool showCreateDropdown = false;
+
+    private async Task OnSearchChanged(ChangeEventArgs e)
+    {
+        searchText = e.Value?.ToString() ?? string.Empty;
+        if (OnSearchTextChanged.HasDelegate)
+        {
+            await OnSearchTextChanged.InvokeAsync(searchText);
+        }
+    }
+
+    private void ToggleCreateDropdown()
+    {
+        showCreateDropdown = !showCreateDropdown;
+    }
+
+    private async Task HandleCreateOption(CreateType createType)
+    {
+        showCreateDropdown = false;
+        
+        if (OnCreateOptionSelected.HasDelegate)
+        {
+            await OnCreateOptionSelected.InvokeAsync(createType);
+        }
+        else if (OnCreateClicked.HasDelegate)
+        {
+            // Fallback to legacy behavior
+            await OnCreateClicked.InvokeAsync();
+        }
+    }
+} 

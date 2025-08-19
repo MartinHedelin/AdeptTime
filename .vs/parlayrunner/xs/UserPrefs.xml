@@ -1,0 +1,70 @@
+﻿<Properties StartupConfiguration="{4F2452B2-FD7D-4BA1-9716-A69BA847636A}|Default">
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="parlayrunner/Components/Pages/LoginView.razor">
+    <Files>
+      <File FileName="parlayrunner/Components/Pages/HomeView.razor" />
+      <File FileName="parlayrunner/wwwroot/css/app.css" />
+      <File FileName="parlayrunner/Components/Layout/MainLayout.razor" />
+      <File FileName="parlayrunner/Components/Pages/ParlayView.razor" />
+      <File FileName="parlayrunner/Components/Layout/ParlayLayout.razor" />
+      <File FileName="parlayrunner.Shared/ViewModels/ParlayViewModel.cs" />
+      <File FileName="parlayrunner.Shared/Interfaces/IParlayService.cs" />
+      <File FileName="parlayrunner.Shared/Models/Parlay.cs" />
+      <File FileName="parlayrunner/Components/Pages/CategoryView.razor" />
+      <File FileName="parlayrunner.Shared/ViewModels/CategoryViewModel.cs" />
+      <File FileName="parlayrunner.Shared/Models/Match.cs" />
+      <File FileName="parlayrunner.Shared/Services/CloudService.cs" />
+      <File FileName="parlayrunner.Shared/ViewModels/SubCategoryViewModel.cs" />
+      <File FileName="parlayrunner/MauiProgram.cs" />
+      <File FileName="parlayrunner.Shared/Interfaces/ICloudService.cs" />
+      <File FileName="parlayrunner.Shared/Models/Category.cs" />
+      <File FileName="parlayrunner/Components/Pages/SubCategoryView.razor" />
+      <File FileName="parlayrunner/Components/Layout/NavMenu.razor" />
+      <File FileName="parlayrunner/App.xaml.cs" />
+      <File FileName="parlayrunner/Components/Pages/LoginView.razor" Line="157" Column="1" />
+      <File FileName="parlayrunner/Components/Layout/ParlayLayout.razor.css" />
+      <File FileName="parlayrunner/Components/Layout/LoginLayout.razor.css" />
+      <File FileName="parlayrunner/Components/Layout/LoginLayout.razor" />
+      <File FileName="parlayrunner.Shared/ViewModels/LoginViewModel.cs" />
+    </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State name="__root__">
+          <Node name="parlayrunner" expanded="True">
+            <Node name="parlayrunner" expanded="True">
+              <Node name="Components" expanded="True">
+                <Node name="Layout" expanded="True">
+                  <Node name="LoginLayout.razor" expanded="True" />
+                  <Node name="ParlayLayout.razor" expanded="True" />
+                </Node>
+                <Node name="Pages" expanded="True">
+                  <Node name="LoginView.razor" selected="True" />
+                </Node>
+              </Node>
+              <Node name="Resources" expanded="True">
+                <Node name="Images" expanded="True" />
+              </Node>
+              <Node name="wwwroot" expanded="True">
+                <Node name="css" expanded="True" />
+                <Node name="images" expanded="True" />
+              </Node>
+              <Node name="App.xaml" expanded="True" />
+              <Node name="MainPage.xaml" expanded="True" />
+            </Node>
+            <Node name="parlayrunner.Shared" expanded="True">
+              <Node name="Services" expanded="True" />
+              <Node name="ViewModels" expanded="True" />
+            </Node>
+          </Node>
+        </State>
+      </Pad>
+    </Pads>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.ItemProperties.parlayrunner PreferredExecutionTarget="MonoDevelop.IPhone.IPhoneSimulatorTarget.A4C5D7CA-7FD4-41A0-8857-C81ABE642357" />
+  <Xamarin.Addins.Core.Project ActiveDebugTarget="MonoDevelop.IPhone.IPhoneSimulatorTarget.A4C5D7CA-7FD4-41A0-8857-C81ABE642357" />
+  <MultiItemStartupConfigurations />
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+</Properties>
