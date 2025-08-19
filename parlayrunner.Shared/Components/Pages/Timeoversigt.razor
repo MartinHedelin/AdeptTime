@@ -70,9 +70,11 @@
 
         </div>
         <div class="filter-right">
-            <select class="status-filter" @bind="pendingFilter">
-                <option value="">Afventer</option>
-                <option value="all">Alle</option>
+            <select class="filter-select status-picker @GetBulkStatusClass()" value="@bulkStatus"
+                    @onchange="(e) => ChangeBulkStatus(e.Value?.ToString())">
+                <option value="Afventer">Afventer</option>
+                <option value="Godkendt">Godkendt</option>
+                <option value="Afvist">Afvist</option>
             </select>
         </div>
     </div>
@@ -80,7 +82,7 @@
     <!-- Main Content Container -->
     <div class="content-container @(isCreatePanelVisible ? "panel-open" : "")">
         <!-- Time Entry Table -->
-        <TimeEntryTable TimeEntries="FilteredTimeEntries" OnStatusChanged="HandleStatusChanged" />
+        <TimeEntryTable @ref="timeEntryTable" TimeEntries="FilteredTimeEntries" OnStatusChanged="HandleStatusChanged" />
     </div>
 
     <!-- Create Case Panel -->
@@ -331,6 +333,8 @@
 </style>
 
 @code {
+    private TimeEntryTable? timeEntryTable;
+    private string? bulkStatus = "Afventer";
     private string selectedStatus = "";
     private string selectedWeek = "42";
     private DateTime fromDate = new DateTime(2022, 1, 22);
@@ -710,6 +714,13 @@
         StateHasChanged();
     }
 
+    private void ChangeBulkStatus(string? newStatus)
+    {
+        bulkStatus = newStatus;
+        timeEntryTable?.ApplyBulkStatus(newStatus);
+        StateHasChanged();
+    }
+
     private void InitializeCustomers()
     {
         customers = new List<Customer>
@@ -723,6 +734,17 @@
     private string GetTopFilterStatusClass()
     {
         return selectedStatus switch
+        {
+            "Afventer" => "pending",
+            "Godkendt" => "approved",
+            "Afvist" => "rejected",
+            _ => ""
+        };
+    }
+
+    private string GetBulkStatusClass()
+    {
+        return bulkStatus switch
         {
             "Afventer" => "pending",
             "Godkendt" => "approved",

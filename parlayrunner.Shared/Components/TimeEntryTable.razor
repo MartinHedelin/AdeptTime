@@ -13,7 +13,6 @@
                     <th class="time-col">Timebank</th>
                     <th class="status-col">Godkend/Afvis</th>
                     <th class="admin-col">Admin</th>
-                    <th class="expand-col"></th>
                 </tr>
             </thead>
             <tbody>
@@ -24,12 +23,25 @@
                         <td class="employee-col">
                             <div class="employee-info">
                                 <!-- Main checkbox to the left -->
-                                <input type="checkbox" class="table-checkbox main-checkbox" @onclick:stopPropagation="true" />
+                                <input type="checkbox" class="table-checkbox main-checkbox" @onclick:stopPropagation="true" checked="@selectedEmployees.Contains(group.Key)" @onchange="(e) => ToggleEmployeeSelection(group.Key, e)" />
                                 <img src="@group.Value.First().Employee.AvatarUrl" alt="@group.Value.First().Employee.Name" class="employee-avatar" />
                                 <div class="employee-details">
                                     <div class="employee-name">@group.Value.First().Employee.Name</div>
                                     <div class="employee-team">@group.Value.First().Employee.Team</div>
                                 </div>
+                                @if (group.Value.Count > 1)
+                                {
+                                    <button class="expand-button inline" @onclick:stopPropagation="true" @onclick="() => ToggleExpansion(group.Key)">
+                                        @if (expandedEmployees.Contains(group.Key))
+                                        {
+                                            <i class="fas fa-chevron-down"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="fas fa-chevron-right"></i>
+                                        }
+                                    </button>
+                                }
                             </div>
                         </td>
                         <td class="date-col">@group.Value.First().Date.ToString("dd MMMM yyyy")</td>
@@ -64,21 +76,6 @@
                                         <div class="approver-team">@approver.Team</div>
                                     </div>
                                 </div>
-                            }
-                        </td>
-                        <td class="expand-col">
-                            @if (group.Value.Count > 1)
-                            {
-                                <button class="expand-button" @onclick:stopPropagation="true" @onclick="() => ToggleExpansion(group.Key)">
-                                    @if (expandedEmployees.Contains(group.Key))
-                                    {
-                                        <i class="fas fa-chevron-down"></i>
-                                    }
-                                    else
-                                    {
-                                        <i class="fas fa-chevron-right"></i>
-                                    }
-                                </button>
                             }
                         </td>
                     </tr>
@@ -377,6 +374,10 @@
         flex-shrink: 0;
     }
 
+    .expand-button.inline {
+        margin-left: auto;
+    }
+
     .expand-button:hover {
         background-color: #f8f9fa;
         color: #495057;
@@ -471,6 +472,7 @@
     [Parameter] public EventCallback<TimeEntry> OnStatusChanged { get; set; }
 
     private HashSet<int> expandedEmployees = new();
+    private HashSet<int> selectedEmployees = new();
     private bool isDetailPanelVisible = false;
     private Employee? selectedEmployee = null;
     private List<TimeEntry>? selectedEmployeeEntries = null;
@@ -532,6 +534,20 @@
         selectedEmployee = entries.First().Employee;
         selectedEmployeeEntries = entries;
         isDetailPanelVisible = true;
+        StateHasChanged();
+    }
+
+    private void ToggleEmployeeSelection(int employeeId, ChangeEventArgs e)
+    {
+        var isChecked = e?.Value is bool b && b;
+        if (isChecked)
+        {
+            selectedEmployees.Add(employeeId);
+        }
+        else
+        {
+            selectedEmployees.Remove(employeeId);
+        }
         StateHasChanged();
     }
 
@@ -599,5 +615,18 @@
             entry.Status = status;
             await OnStatusChanged.InvokeAsync(entry);
         }
+    }
+
+    public void ApplyBulkStatus(string? newStatus)
+    {
+        if (string.IsNullOrWhiteSpace(newStatus)) return;
+        if (!Enum.TryParse<TimeEntryStatus>(newStatus, out var status)) return;
+
+        foreach (var entry in TimeEntries.Where(t => selectedEmployees.Contains(t.Employee.Id)))
+        {
+            entry.Status = status;
+        }
+
+        StateHasChanged();
     }
 } 
