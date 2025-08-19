@@ -1,5 +1,7 @@
 @using Microsoft.AspNetCore.Components
 @using parlayrunner.Shared.Models
+@using parlayrunner.Shared.Services
+@inject UserRoleService UserRoleService
 
 <div class="page-header">
     <div class="header-left">
@@ -25,21 +27,40 @@
                     @CreateButtonText
                     <i class="fas fa-chevron-down dropdown-arrow"></i>
                 </button>
+                <!-- Debug info next to button -->
+                <div style="position: absolute; top: -20px; right: 0; font-size: 10px; background: yellow; padding: 2px 4px; border-radius: 2px; z-index: 1001;">
+                    User: @UserRoleService.CurrentUserEmail | Admin: @UserRoleService.IsAdministrator
+                </div>
                 @if (showCreateDropdown)
                 {
                     <div class="create-dropdown">
-                        <button class="dropdown-item" @onclick="() => HandleCreateOption(CreateType.Case)">
-                            <i class="fas fa-briefcase"></i>
-                            Opret sag
-                        </button>
-                        <button class="dropdown-item" @onclick="() => HandleCreateOption(CreateType.Employee)">
-                            <i class="fas fa-user-plus"></i>
-                            Tilføj medarbejder
-                        </button>
-                        <button class="dropdown-item" @onclick="() => HandleCreateOption(CreateType.Geofence)">
-                            <i class="fas fa-map-marker-alt"></i>
-                            Geofence
-                        </button>
+                        @{
+                            Console.WriteLine($"[PageHeader] Rendering dropdown - IsAdministrator: {UserRoleService.IsAdministrator}");
+                        }
+                        @if (UserRoleService.IsAdministrator)
+                        {
+                            <!-- Administrator options -->
+                            <button class="dropdown-item" @onclick="() => HandleCreateOption(CreateType.Case)">
+                                <i class="fas fa-briefcase"></i>
+                                Opret sag
+                            </button>
+                            <button class="dropdown-item" @onclick="() => HandleCreateOption(CreateType.Employee)">
+                                <i class="fas fa-user-plus"></i>
+                                Tilføj medarbejder
+                            </button>
+                            <button class="dropdown-item" @onclick="() => HandleCreateOption(CreateType.Geofence)">
+                                <i class="fas fa-map-marker-alt"></i>
+                                Geofence
+                            </button>
+                        }
+                        else
+                        {
+                            <!-- Employee options -->
+                            <button class="dropdown-item" @onclick="() => HandleCreateOption(CreateType.AddHours)">
+                                <i class="fas fa-clock"></i>
+                                Tilføj timer
+                            </button>
+                        }
                     </div>
                 }
             </div>
@@ -225,6 +246,8 @@
     }
 </style>
 
+@implements IDisposable
+
 @code {
     [Parameter] public string Title { get; set; } = string.Empty;
     [Parameter] public string SearchPlaceholder { get; set; } = "Søg...";
@@ -238,6 +261,22 @@
 
     private string searchText = string.Empty;
     private bool showCreateDropdown = false;
+
+    protected override void OnInitialized()
+    {
+        UserRoleService.OnRoleChanged += HandleRoleChanged;
+    }
+
+    public void Dispose()
+    {
+        UserRoleService.OnRoleChanged -= HandleRoleChanged;
+    }
+
+    private void HandleRoleChanged(bool isAdministrator)
+    {
+        Console.WriteLine($"[PageHeader] Role changed: {isAdministrator}");
+        InvokeAsync(StateHasChanged);
+    }
 
     private async Task OnSearchChanged(ChangeEventArgs e)
     {

@@ -23,13 +23,12 @@
                     <tr class="table-row main-row @(group.Value.Count > 1 ? "expandable" : "")" @onclick="() => HandleRowClick(group.Key)" @ondblclick="() => ShowEmployeeDetail(group.Key)">
                         <td class="employee-col">
                             <div class="employee-info">
+                                <!-- Main checkbox to the left -->
+                                <input type="checkbox" class="table-checkbox main-checkbox" @onclick:stopPropagation="true" />
                                 <img src="@group.Value.First().Employee.AvatarUrl" alt="@group.Value.First().Employee.Name" class="employee-avatar" />
                                 <div class="employee-details">
                                     <div class="employee-name">@group.Value.First().Employee.Name</div>
                                     <div class="employee-team">@group.Value.First().Employee.Team</div>
-                                    <div class="employee-checkbox">
-                                        <input type="checkbox" class="table-checkbox" @onclick:stopPropagation="true" />
-                                    </div>
                                 </div>
                             </div>
                         </td>
@@ -222,7 +221,11 @@
         width: 16px;
         height: 16px;
         cursor: pointer;
-        margin-top: 8px;
+    }
+
+    .table-checkbox.main-checkbox {
+        margin-right: 12px;
+        flex-shrink: 0;
     }
 
     .employee-checkbox {
@@ -230,7 +233,7 @@
     }
 
     .employee-col {
-        min-width: 220px;
+        min-width: 240px; /* Increased to accommodate checkbox */
     }
 
     .employee-info {

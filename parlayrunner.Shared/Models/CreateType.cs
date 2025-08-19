@@ -4,6 +4,7 @@ public enum CreateType
 {
     Case,
     Employee,
-    Geofence
+    Geofence,
+    AddHours
 }
 

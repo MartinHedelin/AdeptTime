@@ -1,8 +1,10 @@
 @page "/login"
 @using parlayrunner.Shared.ViewModels
 @using parlayrunner.Shared.Interfaces
+@using parlayrunner.Shared.Services
 @inject NavigationManager NavigationManager
 @inject IAuthenticationService AuthService
+@inject UserRoleService UserRoleService
 @layout AuthLayout
 
 <PageTitle>Login</PageTitle>
@@ -236,8 +238,11 @@
             
             if (success)
             {
-                // Redirect to dashboard
-                NavigationManager.NavigateTo("/", true);
+                // Set user role based on email
+                UserRoleService.SetCurrentUser(loginModel.Email);
+                
+                // Redirect without forcing full reload to preserve in-memory role state
+                NavigationManager.NavigateTo("/", false);
             }
             else
             {

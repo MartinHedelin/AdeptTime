@@ -19,4 +19,7 @@ builder.Services.AddScoped<ISaegsService, SaegsService>();
 // Add team selection service
 builder.Services.AddSingleton<TeamSelectionService>();
 
+// Add user role service
+builder.Services.AddSingleton<UserRoleService>();
+
 await builder.Build().RunAsync();

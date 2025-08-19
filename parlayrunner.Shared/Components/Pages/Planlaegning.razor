@@ -119,6 +119,12 @@
         OnClose="CloseEmployeeInvitePanel"
         OnEmployeeInvited="HandleEmployeeInvited" />
 
+    <!-- Add Hours Panel -->
+    <AddHoursPanel 
+        IsVisible="isAddHoursPanelVisible"
+        OnClose="CloseAddHoursPanel"
+        OnHoursSubmitted="HandleHoursSubmitted" />
+
     <!-- Planning Panel -->
     <PlanningPanel 
         IsVisible="isPlanningPanelVisible"
@@ -383,6 +389,7 @@
     private string selectedEmployee = "";
     private bool isCreatePanelVisible = false;
     private bool isEmployeeInvitePanelVisible = false;
+    private bool isAddHoursPanelVisible = false;
     private bool isPlanningPanelVisible = false;
     private bool showDatePicker = false;
     private string dateRangeText = "";
@@ -655,6 +662,9 @@
             case CreateType.Geofence:
                 Navigation.NavigateTo("/geofence-create");
                 break;
+            case CreateType.AddHours:
+                isAddHoursPanelVisible = true;
+                break;
         }
         return Task.CompletedTask;
     }
@@ -669,6 +679,11 @@
         isEmployeeInvitePanelVisible = false;
     }
 
+    private void CloseAddHoursPanel()
+    {
+        isAddHoursPanelVisible = false;
+    }
+
     private void HandleCaseCreated(Case newCase)
     {
         // Handle the newly created case/schedule entry
@@ -679,6 +694,18 @@
     {
         // Add the new employee to the employees list
         employees.Add(newEmployee);
+        StateHasChanged();
+    }
+
+    private void HandleHoursSubmitted(List<AddHoursPanel.TimeEntryData> hoursData)
+    {
+        // In Planlaegning context, we could add to schedule entries or log for later processing
+        // For now, just log to console as this is more for scheduling than time tracking
+        Console.WriteLine($"Hours submitted from planning page: {hoursData.Count} entries");
+        foreach (var entry in hoursData)
+        {
+            Console.WriteLine($"  - {entry.Date:yyyy-MM-dd}: {entry.TotalHours} hours - {entry.Description}");
+        }
         StateHasChanged();
     }
 

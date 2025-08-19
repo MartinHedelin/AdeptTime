@@ -15,6 +15,16 @@
             <!-- Email Invitation Form -->
             <div class="form-section">
                 <div class="form-group">
+                    <div class="checkbox-group">
+                        <input id="is-administrator" 
+                               type="checkbox" 
+                               @bind="isAdministrator" 
+                               class="form-checkbox" />
+                        <label for="is-administrator" class="checkbox-label">Administrator</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
                     <label for="employee-email">Email adresse <span class="required">(required)</span></label>
                     <input id="employee-email" 
                            type="email" 
@@ -232,6 +242,29 @@
         color: #dc3545;
     }
 
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .form-checkbox {
+        width: 18px;
+        height: 18px;
+        border: 2px solid #e1e5e9;
+        border-radius: 4px;
+        cursor: pointer;
+        accent-color: #938fbf;
+    }
+
+    .checkbox-label {
+        font-size: 14px;
+        font-weight: 500;
+        color: #374151;
+        cursor: pointer;
+        margin: 0;
+    }
+
     .invitation-preview {
         background: #f8f9fa;
         border: 1px solid #e9ecef;
@@ -350,6 +383,7 @@
     private string selectedTeam = "";
     private string selectedPosition = "";
     private string inviteGuid = "";
+    private bool isAdministrator = false;
     private bool emailError = false;
     private bool isLoading = false;
 
@@ -444,6 +478,7 @@
         selectedTeam = "";
         selectedPosition = "";
         inviteGuid = "";
+        isAdministrator = false;
         emailError = false;
         isLoading = false;
     }

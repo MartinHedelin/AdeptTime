@@ -12,6 +12,7 @@ public class TimeEntry
     public TimeEntryStatus Status { get; set; }
     public Employee? ApprovedBy { get; set; }
     public DateTime? ApprovedDate { get; set; }
+    public string Description { get; set; } = string.Empty;
 }
 
 public enum TimeEntryStatus

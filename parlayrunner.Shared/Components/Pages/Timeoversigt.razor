@@ -4,10 +4,17 @@
 @using parlayrunner.Shared.Services
 @inject TeamSelectionService TeamService
 @inject NavigationManager Navigation
+@inject UserRoleService UserRoleService
 
 <PageTitle>Timeoversigt</PageTitle>
 
 <div class="timeoversigt-container">
+    <!-- Debug Info Panel -->
+    <div style="background: #f0f0f0; padding: 10px; margin: 10px; border-radius: 5px; font-size: 12px; color: #666;">
+        <strong>Debug Info:</strong> User: @UserRoleService.CurrentUserEmail | Is Admin: @UserRoleService.IsAdministrator
+        <button style="margin-left: 10px; padding: 2px 8px; font-size: 11px;" @onclick="LogCurrentStatus">Log Status</button>
+    </div>
+
     <!-- Main Header using new PageHeader component -->
     <PageHeader 
         Title="Timeoversigt"
@@ -89,6 +96,12 @@
         IsVisible="isEmployeeInvitePanelVisible"
         OnClose="CloseEmployeeInvitePanel"
         OnEmployeeInvited="HandleEmployeeInvited" />
+
+    <!-- Add Hours Panel -->
+    <AddHoursPanel 
+        IsVisible="isAddHoursPanelVisible"
+        OnClose="CloseAddHoursPanel"
+        OnHoursSubmitted="HandleHoursSubmitted" />
 </div>
 
 <style>
@@ -325,6 +338,7 @@
     private string pendingFilter = "";
     private bool isCreatePanelVisible = false;
     private bool isEmployeeInvitePanelVisible = false;
+    private bool isAddHoursPanelVisible = false;
     private bool showDatePicker = false;
     private string dateRangeText = "";
 
@@ -341,6 +355,9 @@
         
         // Subscribe to team changes
         TeamService.OnTeamChanged += HandleTeamSelectionChanged;
+        
+        // Debug: Log current user role status
+        Console.WriteLine($"[Timeoversigt] Page loaded - User: {UserRoleService.CurrentUserEmail}, IsAdmin: {UserRoleService.IsAdministrator}");
     }
 
     private void HandleTeamSelectionChanged(string selectedTeam)
@@ -623,6 +640,9 @@
             case CreateType.Geofence:
                 Navigation.NavigateTo("/geofence-create");
                 break;
+            case CreateType.AddHours:
+                isAddHoursPanelVisible = true;
+                break;
         }
         return Task.CompletedTask;
     }
@@ -635,6 +655,11 @@
     private void CloseEmployeeInvitePanel()
     {
         isEmployeeInvitePanelVisible = false;
+    }
+
+    private void CloseAddHoursPanel()
+    {
+        isAddHoursPanelVisible = false;
     }
 
     private void HandleCaseCreated(Case newCase)
@@ -657,6 +682,34 @@
         StateHasChanged();
     }
 
+    private void HandleHoursSubmitted(List<AddHoursPanel.TimeEntryData> hoursData)
+    {
+        // Convert AddHoursPanel.TimeEntryData to TimeEntry objects and add to timeEntries
+        // For demo purposes, we'll use the current user (first employee) as the submitter
+        var currentEmployee = employees.FirstOrDefault() ?? new Employee { Id = 999, Name = "Current User", Team = "Unknown" };
+        
+        foreach (var entry in hoursData)
+        {
+            var newTimeEntry = new TimeEntry
+            {
+                Id = Random.Shared.Next(10000, 99999),
+                Employee = currentEmployee,
+                Date = entry.Date,
+                CheckIn = new TimeSpan(8, 0, 0), // Default check-in time
+                CheckOut = new TimeSpan(8, 0, 0).Add(TimeSpan.FromHours((double)entry.TotalHours)), // Calculate check-out
+                TotalHours = TimeSpan.FromHours((double)entry.TotalHours),
+                TimeBank = TimeSpan.Zero, // Will be calculated later
+                Status = TimeEntryStatus.Afventer, // New entries are pending
+                Description = entry.Description
+            };
+            
+            timeEntries.Add(newTimeEntry);
+        }
+        
+        Console.WriteLine($"Added {hoursData.Count} time entries for user: {currentEmployee.Name}");
+        StateHasChanged();
+    }
+
     private void InitializeCustomers()
     {
         customers = new List<Customer>
@@ -676,6 +729,14 @@
             "Afvist" => "rejected",
             _ => ""
         };
+    }
+
+    private void LogCurrentStatus()
+    {
+        Console.WriteLine($"[Timeoversigt DEBUG] Button clicked!");
+        Console.WriteLine($"[Timeoversigt DEBUG] Current User: {UserRoleService.CurrentUserEmail}");
+        Console.WriteLine($"[Timeoversigt DEBUG] Is Administrator: {UserRoleService.IsAdministrator}");
+        Console.WriteLine($"[Timeoversigt DEBUG] PageHeader should show: {(UserRoleService.IsAdministrator ? "Admin options" : "Employee options")}");
     }
 
 

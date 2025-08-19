@@ -78,6 +78,12 @@
         OnClose="CloseEmployeeInvitePanel"
         OnEmployeeInvited="HandleEmployeeInvited" />
 
+    <!-- Add Hours Panel -->
+    <AddHoursPanel 
+        IsVisible="isAddHoursPanelVisible"
+        OnClose="CloseAddHoursPanel"
+        OnHoursSubmitted="HandleHoursSubmitted" />
+
     <!-- Case Detail View -->
     <CaseDetailView 
         IsVisible="isCaseDetailVisible"
@@ -218,6 +224,7 @@
     private DateTime selectedDate = new DateTime(2022, 1, 22);
     private bool isCreatePanelVisible = false;
     private bool isEmployeeInvitePanelVisible = false;
+    private bool isAddHoursPanelVisible = false;
     private bool isCaseDetailVisible = false;
     private Case? selectedCase = null;
 
@@ -556,6 +563,9 @@
             case CreateType.Geofence:
                 Navigation.NavigateTo("/geofence-create");
                 break;
+            case CreateType.AddHours:
+                isAddHoursPanelVisible = true;
+                break;
         }
         return Task.CompletedTask;
     }
@@ -565,10 +575,27 @@
         isEmployeeInvitePanelVisible = false;
     }
 
+    private void CloseAddHoursPanel()
+    {
+        isAddHoursPanelVisible = false;
+    }
+
     private void HandleEmployeeInvited(Employee newEmployee)
     {
         // Add the new employee to the employees list
         employees.Add(newEmployee);
+        StateHasChanged();
+    }
+
+    private void HandleHoursSubmitted(List<AddHoursPanel.TimeEntryData> hoursData)
+    {
+        // In Sager context, we could relate hours to specific cases or log for later processing
+        // For now, just log to console
+        Console.WriteLine($"Hours submitted from cases page: {hoursData.Count} entries");
+        foreach (var entry in hoursData)
+        {
+            Console.WriteLine($"  - {entry.Date:yyyy-MM-dd}: {entry.TotalHours} hours - {entry.Description}");
+        }
         StateHasChanged();
     }
 } 

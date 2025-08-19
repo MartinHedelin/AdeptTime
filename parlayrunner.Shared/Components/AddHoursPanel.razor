@@ -1,0 +1,479 @@
+@using parlayrunner.Shared.Models
+
+<div class="add-hours-overlay @(IsVisible ? "visible" : "")">
+    <div class="add-hours-panel @(IsVisible ? "open" : "")">
+        <!-- Header -->
+        <div class="panel-header">
+            <h2>Tilføj timer</h2>
+            <button class="close-button" @onclick="HandleClose">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="panel-content">
+            <!-- Add Hours Form -->
+            <div class="form-section">
+                <div class="form-group">
+                    <label for="entry-date">Dato <span class="required">(required)</span></label>
+                    <input id="entry-date" 
+                           type="date" 
+                           @bind="entryDate" 
+                           class="form-input" />
+                </div>
+
+                <div class="form-group">
+                    <label for="total-hours">Samlede timer <span class="required">(required)</span></label>
+                    <input id="total-hours" 
+                           type="number" 
+                           step="0.5"
+                           min="0"
+                           max="24"
+                           @bind="totalHours" 
+                           class="form-input" 
+                           placeholder="f.eks. 8.5" />
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Beskrivelse <span class="optional">(optional)</span></label>
+                    <textarea id="description" 
+                              @bind="description" 
+                              class="form-textarea" 
+                              rows="3"
+                              placeholder="Beskriv kort dit arbejde..."></textarea>
+                </div>
+
+                <!-- Add Button -->
+                <div class="action-row">
+                    <button class="add-entry-button" @onclick="AddEntry" disabled="@(!IsEntryValid)">
+                        <i class="fas fa-plus"></i>
+                        <span>Tilføj indgangspunkt</span>
+                    </button>
+                </div>
+
+                <!-- Entries List -->
+                @if (timeEntries.Count > 0)
+                {
+                    <div class="entries-section">
+                        <h4>Tilføjede indgangspunkter:</h4>
+                        <div class="entries-list">
+                            @foreach (var entry in timeEntries)
+                            {
+                                <div class="entry-item">
+                                    <div class="entry-info">
+                                        <div class="entry-date">@entry.Date.ToString("dd/MM/yyyy")</div>
+                                        <div class="entry-hours">@entry.TotalHours timer</div>
+                                        @if (!string.IsNullOrEmpty(entry.Description))
+                                        {
+                                            <div class="entry-description">@entry.Description</div>
+                                        }
+                                    </div>
+                                    <button class="remove-entry-button" @onclick="() => RemoveEntry(entry)">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="panel-footer">
+            <button class="cancel-button" @onclick="HandleClose">
+                Annuller
+            </button>
+            <button class="submit-button" @onclick="SubmitEntries" disabled="@(timeEntries.Count == 0 || isLoading)">
+                @if (isLoading)
+                {
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>Gemmer...</span>
+                }
+                else
+                {
+                    <i class="fas fa-save"></i>
+                    <span>Gem timer (@timeEntries.Count)</span>
+                }
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .add-hours-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .add-hours-overlay.visible {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .add-hours-panel {
+        position: fixed;
+        top: 0;
+        right: -500px;
+        width: 500px;
+        height: 100%;
+        background: white;
+        box-shadow: -2px 0 20px rgba(0, 0, 0, 0.1);
+        transition: right 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        z-index: 1001;
+    }
+
+    .add-hours-panel.open {
+        right: 0;
+    }
+
+    .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 24px 32px;
+        border-bottom: 1px solid #e9ecef;
+        background: #f8f9fa;
+    }
+
+    .panel-header h2 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 600;
+        color: #212529;
+    }
+
+    .close-button {
+        background: none;
+        border: none;
+        font-size: 20px;
+        color: #6c757d;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+
+    .close-button:hover {
+        background: #e9ecef;
+        color: #495057;
+    }
+
+    .panel-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 32px;
+    }
+
+    .form-section {
+        margin-bottom: 32px;
+    }
+
+    .form-group {
+        margin-bottom: 24px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        color: #374151;
+    }
+
+    .required {
+        color: #dc3545;
+        font-weight: 400;
+    }
+
+    .optional {
+        color: #6c757d;
+        font-weight: 400;
+    }
+
+    .form-input, .form-textarea {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e1e5e9;
+        border-radius: 8px;
+        font-size: 14px;
+        color: #374151;
+        background: white;
+        transition: all 0.2s ease;
+    }
+
+    .form-input:focus, .form-textarea:focus {
+        outline: none;
+        border-color: #938fbf;
+        box-shadow: 0 0 0 3px rgba(147, 143, 191, 0.1);
+    }
+
+    .form-textarea {
+        resize: vertical;
+        min-height: 80px;
+    }
+
+    .action-row {
+        margin-bottom: 24px;
+    }
+
+    .add-entry-button {
+        padding: 10px 20px;
+        border: 2px solid #938fbf;
+        border-radius: 6px;
+        background: white;
+        color: #938fbf;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .add-entry-button:hover:not(:disabled) {
+        background: #938fbf;
+        color: white;
+    }
+
+    .add-entry-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .entries-section {
+        border-top: 1px solid #e9ecef;
+        padding-top: 24px;
+    }
+
+    .entries-section h4 {
+        margin: 0 0 16px 0;
+        font-size: 16px;
+        color: #374151;
+    }
+
+    .entries-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .entry-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px;
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+    }
+
+    .entry-info {
+        flex: 1;
+    }
+
+    .entry-date {
+        font-weight: 600;
+        font-size: 14px;
+        color: #374151;
+        margin-bottom: 4px;
+    }
+
+    .entry-hours {
+        font-size: 13px;
+        color: #938fbf;
+        font-weight: 500;
+    }
+
+    .entry-description {
+        font-size: 12px;
+        color: #6c757d;
+        margin-top: 4px;
+    }
+
+    .remove-entry-button {
+        background: none;
+        border: none;
+        color: #dc3545;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+
+    .remove-entry-button:hover {
+        background: #f8d7da;
+    }
+
+    .panel-footer {
+        padding: 24px 32px;
+        border-top: 1px solid #e9ecef;
+        background: #f8f9fa;
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+    }
+
+    .cancel-button {
+        padding: 12px 24px;
+        border: 2px solid #e1e5e9;
+        border-radius: 8px;
+        background: white;
+        color: #6c757d;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .cancel-button:hover {
+        border-color: #c3c8ce;
+        color: #495057;
+    }
+
+    .submit-button {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        background: #938fbf;
+        color: white;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .submit-button:hover:not(:disabled) {
+        background: #7a75a8;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(147, 143, 191, 0.3);
+    }
+
+    .submit-button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .submit-button i {
+        font-size: 12px;
+    }
+
+    @@media (max-width: 768px) {
+        .add-hours-panel {
+            width: 100%;
+            right: -100%;
+        }
+
+        .panel-header, .panel-content, .panel-footer {
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+    }
+</style>
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<List<TimeEntryData>> OnHoursSubmitted { get; set; }
+
+    private DateTime entryDate = DateTime.Today;
+    private decimal totalHours = 0;
+    private string description = "";
+    private bool isLoading = false;
+    private List<TimeEntryData> timeEntries = new();
+
+    private bool IsEntryValid => entryDate != default && totalHours > 0;
+
+    private void AddEntry()
+    {
+        if (!IsEntryValid) return;
+
+        var newEntry = new TimeEntryData
+        {
+            Date = entryDate,
+            TotalHours = totalHours,
+            Description = description
+        };
+
+        timeEntries.Add(newEntry);
+
+        // Reset form for next entry
+        entryDate = DateTime.Today;
+        totalHours = 0;
+        description = "";
+
+        StateHasChanged();
+    }
+
+    private void RemoveEntry(TimeEntryData entry)
+    {
+        timeEntries.Remove(entry);
+        StateHasChanged();
+    }
+
+    private async Task HandleClose()
+    {
+        ResetForm();
+        await OnClose.InvokeAsync();
+    }
+
+    private async Task SubmitEntries()
+    {
+        if (timeEntries.Count == 0) return;
+
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            // Simulate saving delay
+            await Task.Delay(1000);
+
+            await OnHoursSubmitted.InvokeAsync(timeEntries);
+            await HandleClose();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error submitting hours: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ResetForm()
+    {
+        entryDate = DateTime.Today;
+        totalHours = 0;
+        description = "";
+        timeEntries.Clear();
+        isLoading = false;
+    }
+
+    // Data model for time entries in this component
+    public class TimeEntryData
+    {
+        public DateTime Date { get; set; }
+        public decimal TotalHours { get; set; }
+        public string Description { get; set; } = "";
+    }
+}
+
+
