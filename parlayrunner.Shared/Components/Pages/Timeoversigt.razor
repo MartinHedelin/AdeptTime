@@ -83,6 +83,12 @@
         OnCaseCreated="HandleCaseCreated"
         Customers="customers"
         Employees="employees" />
+
+    <!-- Employee Invite Panel -->
+    <EmployeeInvitePanel 
+        IsVisible="isEmployeeInvitePanelVisible"
+        OnClose="CloseEmployeeInvitePanel"
+        OnEmployeeInvited="HandleEmployeeInvited" />
 </div>
 
 <style>
@@ -318,6 +324,7 @@
     private DateTime toDate = new DateTime(2022, 1, 28);
     private string pendingFilter = "";
     private bool isCreatePanelVisible = false;
+    private bool isEmployeeInvitePanelVisible = false;
     private bool showDatePicker = false;
     private string dateRangeText = "";
 
@@ -611,9 +618,7 @@
                 isCreatePanelVisible = true;
                 break;
             case CreateType.Employee:
-                // TODO: Implement employee creation functionality
-                // For now, open the same create panel
-                isCreatePanelVisible = true;
+                isEmployeeInvitePanelVisible = true;
                 break;
             case CreateType.Geofence:
                 Navigation.NavigateTo("/geofence-create");
@@ -627,10 +632,28 @@
         isCreatePanelVisible = false;
     }
 
+    private void CloseEmployeeInvitePanel()
+    {
+        isEmployeeInvitePanelVisible = false;
+    }
+
     private void HandleCaseCreated(Case newCase)
     {
         // Handle the newly created case - in this context it could be a time entry creation
         // For now just close the panel
+        StateHasChanged();
+    }
+
+    private void HandleEmployeeInvited(Employee newEmployee)
+    {
+        // Add the new employee to the employees list
+        employees.Add(newEmployee);
+        
+        // In a real application, you might want to:
+        // 1. Save to database
+        // 2. Send notification
+        // 3. Refresh employee list from server
+        
         StateHasChanged();
     }
 

@@ -113,6 +113,12 @@
         Customers="customers"
         Employees="employees" />
 
+    <!-- Employee Invite Panel -->
+    <EmployeeInvitePanel 
+        IsVisible="isEmployeeInvitePanelVisible"
+        OnClose="CloseEmployeeInvitePanel"
+        OnEmployeeInvited="HandleEmployeeInvited" />
+
     <!-- Planning Panel -->
     <PlanningPanel 
         IsVisible="isPlanningPanelVisible"
@@ -376,6 +382,7 @@
     private string selectedStatus = "";
     private string selectedEmployee = "";
     private bool isCreatePanelVisible = false;
+    private bool isEmployeeInvitePanelVisible = false;
     private bool isPlanningPanelVisible = false;
     private bool showDatePicker = false;
     private string dateRangeText = "";
@@ -643,9 +650,7 @@
                 isCreatePanelVisible = true;
                 break;
             case CreateType.Employee:
-                // TODO: Implement employee creation functionality
-                // For now, open the same create panel
-                isCreatePanelVisible = true;
+                isEmployeeInvitePanelVisible = true;
                 break;
             case CreateType.Geofence:
                 Navigation.NavigateTo("/geofence-create");
@@ -659,9 +664,21 @@
         isCreatePanelVisible = false;
     }
 
+    private void CloseEmployeeInvitePanel()
+    {
+        isEmployeeInvitePanelVisible = false;
+    }
+
     private void HandleCaseCreated(Case newCase)
     {
         // Handle the newly created case/schedule entry
+        StateHasChanged();
+    }
+
+    private void HandleEmployeeInvited(Employee newEmployee)
+    {
+        // Add the new employee to the employees list
+        employees.Add(newEmployee);
         StateHasChanged();
     }
 
