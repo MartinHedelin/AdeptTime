@@ -1,34 +1,56 @@
 {
-    "omnisharp.enableRoslynAnalyzers": true,
-    "omnisharp.enableEditorConfigSupport": true,
-    "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true,
-    "dotnet.codeLens.enableReferencesCodeLens": true,
-    "razor.languageServer.debug": false,
-    "razor.devmode": false,
-    "files.associations": {
-        "*.razor": "razor"
-    },
-    "emmet.includeLanguages": {
-        "razor": "html"
-    },
-    "html.suggest.html5": true,
-    "css.validate": true,
-    "less.validate": true,
-    "scss.validate": true,
-    "files.exclude": {
-        "**/bin": true,
-        "**/obj": true,
-        "**/.vs": true
-    },
-    "search.exclude": {
-        "**/bin": true,
-        "**/obj": true,
-        "**/.vs": true,
-        "**/node_modules": true
-    },
-    "files.watcherExclude": {
-        "**/bin/**": true,
-        "**/obj/**": true,
-        "**/.vs/**": true
-    }
-} 
+  "[typescript]": {
+    "editor.defaultFormatter": "denoland.vscode-deno"
+  },
+  "css.validate": true,
+  "deno.enablePaths": [
+    "supabase/functions"
+  ],
+  "deno.lint": true,
+  "deno.unstable": [
+    "bare-node-builtins",
+    "byonm",
+    "sloppy-imports",
+    "unsafe-proto",
+    "webgpu",
+    "broadcast-channel",
+    "worker-options",
+    "cron",
+    "kv",
+    "ffi",
+    "fs",
+    "http",
+    "net"
+  ],
+  "dotnet.codeLens.enableReferencesCodeLens": true,
+  "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true,
+  "emmet.includeLanguages": {
+    "razor": "html"
+  },
+  "files.associations": {
+    "*.razor": "razor"
+  },
+  "files.exclude": {
+    "**/.vs": true,
+    "**/bin": true,
+    "**/obj": true
+  },
+  "files.watcherExclude": {
+    "**/.vs/**": true,
+    "**/bin/**": true,
+    "**/obj/**": true
+  },
+  "html.suggest.html5": true,
+  "less.validate": true,
+  "omnisharp.enableEditorConfigSupport": true,
+  "omnisharp.enableRoslynAnalyzers": true,
+  "razor.devmode": false,
+  "razor.languageServer.debug": false,
+  "scss.validate": true,
+  "search.exclude": {
+    "**/.vs": true,
+    "**/bin": true,
+    "**/node_modules": true,
+    "**/obj": true
+  }
+}

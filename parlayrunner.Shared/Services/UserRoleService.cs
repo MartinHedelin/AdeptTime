@@ -10,17 +10,13 @@ public class UserRoleService
     public bool IsAdministrator => _isAdministrator;
     public string CurrentUserEmail => _currentUserEmail;
 
-    public void SetCurrentUser(string email)
+    public void SetCurrentUser(string email, bool isAdministrator = false)
     {
         _currentUserEmail = email;
-        // Use "admin" instead of "administrator" and ensure case-insensitive comparison
-        _isAdministrator = !string.IsNullOrEmpty(email) && 
-                          email.ToLowerInvariant().Contains("admin");
+        _isAdministrator = isAdministrator;
         
         // Debug logging
         Console.WriteLine($"[UserRoleService] Setting user: {email}");
-        Console.WriteLine($"[UserRoleService] Email ToLowerInvariant: {email.ToLowerInvariant()}");
-        Console.WriteLine($"[UserRoleService] Contains 'admin': {email.ToLowerInvariant().Contains("admin")}");
         Console.WriteLine($"[UserRoleService] Is Administrator: {_isAdministrator}");
         Console.WriteLine($"[UserRoleService] OnRoleChanged has listeners: {OnRoleChanged != null}");
         

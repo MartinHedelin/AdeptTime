@@ -3,7 +3,7 @@
 @using parlayrunner.Shared.Interfaces
 @using parlayrunner.Shared.Services
 @inject NavigationManager NavigationManager
-@inject IAuthenticationService AuthService
+@inject IUserService UserService
 @inject UserRoleService UserRoleService
 @layout AuthLayout
 
@@ -230,28 +230,34 @@
             isLoading = true;
             errorMessage = null;
 
-            // Simulate loading delay
-            await Task.Delay(1000);
-
-            // Use authentication service
-            var success = await AuthService.LoginAsync(loginModel.Email, loginModel.Password);
+            // Validate with Supabase database
+            bool isValid = await UserService.ValidatePasswordAsync(loginModel.Email, loginModel.Password);
             
-            if (success)
+            if (isValid)
             {
-                // Set user role based on email
-                UserRoleService.SetCurrentUser(loginModel.Email);
-                
-                // Redirect without forcing full reload to preserve in-memory role state
-                NavigationManager.NavigateTo("/", false);
+                // Get user info for session
+                var user = await UserService.GetUserByEmailAsync(loginModel.Email);
+                if (user != null)
+                {
+                    // Set user role based on database value
+                    UserRoleService.SetCurrentUser(loginModel.Email, user.IsAdmin);
+                    
+                    // Redirect without forcing full reload to preserve in-memory role state
+                    NavigationManager.NavigateTo("/", false);
+                }
+                else
+                {
+                    errorMessage = "User not found";
+                }
             }
             else
             {
-                errorMessage = "Please enter both email and password";
+                errorMessage = "Invalid email or password";
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            errorMessage = "An error occurred during login. Please try again.";
+            errorMessage = "An error occurred during login: " + ex.Message;
         }
         finally
         {

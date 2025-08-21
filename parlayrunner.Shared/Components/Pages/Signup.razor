@@ -1,8 +1,9 @@
 @page "/signup"
 @using parlayrunner.Shared.ViewModels
 @using parlayrunner.Shared.Interfaces
+@using parlayrunner.Shared.Models
 @inject NavigationManager NavigationManager
-@inject IAuthenticationService AuthService
+@inject IUserService UserService
 @layout AuthLayout
 
 <PageTitle>Sign Up</PageTitle>
@@ -40,6 +41,32 @@
                     <label for="confirmPassword" class="form-label">Confirm Password</label>
                     <InputText id="confirmPassword" type="password" @bind-Value="signupModel.ConfirmPassword" class="form-control" placeholder="Confirm your password" />
                     <ValidationMessage For="@(() => signupModel.ConfirmPassword)" class="validation-message" />
+                </div>
+
+                <div class="form-group">
+                    <label for="phone" class="form-label">Phone Number (Optional)</label>
+                    <InputText id="phone" @bind-Value="signupModel.PhoneNumber" class="form-control" placeholder="+1234567890" />
+                </div>
+
+                <div class="form-group">
+                    <label for="address" class="form-label">Address (Optional)</label>
+                    <InputText id="address" @bind-Value="signupModel.Address" class="form-control" placeholder="123 Main St, City, State" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">User Type</label>
+                    <div class="user-type-selector">
+                        <div class="user-type-option @(signupModel.UserTypeId == 0 ? "selected" : "")" 
+                             @onclick="() => signupModel.UserTypeId = 0">
+                            <strong>Worker</strong>
+                            <div>Regular user with standard permissions</div>
+                        </div>
+                        <div class="user-type-option @(signupModel.UserTypeId == 1 ? "selected" : "")" 
+                             @onclick="() => signupModel.UserTypeId = 1">
+                            <strong>Administrator</strong>
+                            <div>Admin with full system access</div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -235,6 +262,31 @@
         font-size: 0.8rem;
         margin-top: 0.25rem;
     }
+
+    .user-type-selector {
+        display: flex;
+        gap: 1rem;
+        margin: 1rem 0;
+    }
+
+    .user-type-option {
+        flex: 1;
+        padding: 1rem;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.2s;
+    }
+
+        .user-type-option.selected {
+            border-color: #3498db;
+            background-color: #f8f9fa;
+        }
+
+        .user-type-option:hover {
+            border-color: #bdc3c7;
+        }
 </style>
 
 @code {
@@ -275,21 +327,32 @@
                 return;
             }
 
-            // Create account using authentication service
-            var success = await AuthService.LoginAsync(signupModel.Email, signupModel.Password);
+            // Check if user already exists
+            var existingUser = await UserService.GetUserByEmailAsync(signupModel.Email);
+            if (existingUser != null)
+            {
+                errorMessage = "An account with this email already exists";
+                return;
+            }
+
+            // Create new user in Supabase
+            var newUser = new User
+            {
+                Email = signupModel.Email,
+                PasswordHash = signupModel.Password, // Will be hashed in the service
+                UserTypeId = signupModel.UserTypeId,
+                Name = signupModel.Name,
+                PhoneNumber = signupModel.PhoneNumber,
+                Address = signupModel.Address
+            };
+
+            var createdUser = await UserService.CreateUserAsync(newUser);
             
-            if (success)
-            {
-                successMessage = "Account created successfully! Redirecting...";
-                
-                // Wait a bit then redirect to dashboard
-                await Task.Delay(1500);
-                NavigationManager.NavigateTo("/", true);
-            }
-            else
-            {
-                errorMessage = "Failed to create account. Please try again.";
-            }
+            successMessage = "Account created successfully! Redirecting to login...";
+            
+            // Wait a bit then redirect to login
+            await Task.Delay(1500);
+            NavigationManager.NavigateTo("/login", true);
         }
         catch (Exception)
         {
@@ -307,6 +370,9 @@
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
         public string ConfirmPassword { get; set; } = string.Empty;
+        public string? PhoneNumber { get; set; }
+        public string? Address { get; set; }
+        public int UserTypeId { get; set; } = 0; // Default to worker
         public bool AcceptTerms { get; set; } = false;
     }
 } 
