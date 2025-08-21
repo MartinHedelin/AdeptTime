@@ -35,7 +35,7 @@ public class SupabaseService : ISupabaseService
             {
                 var options = new SupabaseOptions
                 {
-                    AutoConnectRealtime = true,
+                    AutoConnectRealtime = false,  // Disabled for Blazor WASM compatibility
                     AutoRefreshToken = true
                 };
 

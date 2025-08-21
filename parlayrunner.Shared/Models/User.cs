@@ -33,10 +33,7 @@ public class User : BaseModel
     [Column("updated_at")]
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-    // Navigation property (not stored in DB)
-    public UserType? UserType { get; set; }
-    
-    // Helper properties
+    // Helper properties (computed, not stored in DB)
     public bool IsAdmin => UserTypeId == 1;
     public bool IsWorker => UserTypeId == 0;
 }
