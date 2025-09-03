@@ -1,6 +1,6 @@
 using Supabase;
 
-namespace parlayrunner.Shared.Interfaces;
+namespace AdeptTime.Shared.Interfaces;
 
 public interface ISupabaseService
 {

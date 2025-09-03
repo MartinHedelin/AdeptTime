@@ -1,7 +1,7 @@
 using Supabase.Postgrest.Attributes;
 using Supabase.Postgrest.Models;
 
-namespace parlayrunner.Shared.Models;
+namespace AdeptTime.Shared.Models;
 
 [Table("user_types")]
 public class UserType : BaseModel

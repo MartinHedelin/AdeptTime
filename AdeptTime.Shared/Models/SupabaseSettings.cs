@@ -1,4 +1,4 @@
-namespace parlayrunner.Shared.Models;
+namespace AdeptTime.Shared.Models;
 
 public class SupabaseSettings
 {

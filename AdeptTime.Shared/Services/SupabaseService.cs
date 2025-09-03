@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Logging;
-using parlayrunner.Shared.Interfaces;
-using parlayrunner.Shared.Models;
+using AdeptTime.Shared.Interfaces;
+using AdeptTime.Shared.Models;
 using Supabase;
 
-namespace parlayrunner.Shared.Services;
+namespace AdeptTime.Shared.Services;
 
 public class SupabaseService : ISupabaseService
 {
