@@ -1,0 +1,485 @@
+@using AdeptTime.Shared.Models
+@using AdeptTime.Shared.Interfaces
+
+<div class="employee-invite-overlay @(IsVisible ? "visible" : "")">
+    <div class="employee-invite-panel @(IsVisible ? "open" : "")">
+        <!-- Header -->
+        <div class="panel-header">
+            <h2>Tilføj medarbejder</h2>
+            <button class="close-button" @onclick="HandleClose">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="panel-content">
+            <!-- Email Invitation Form -->
+            <div class="form-section">
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input id="is-administrator" 
+                               type="checkbox" 
+                               @bind="isAdministrator" 
+                               class="form-checkbox" />
+                        <label for="is-administrator" class="checkbox-label">Administrator</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="employee-email">Email adresse <span class="required">(required)</span></label>
+                    <input id="employee-email" 
+                           type="email" 
+                           @bind="inviteEmail" 
+                           class="form-input @(emailError ? "error" : "")" 
+                           placeholder="Indtast medarbejders email..." />
+                    @if (emailError)
+                    {
+                        <div class="error-message">Venligst indtast en gyldig email adresse</div>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="employee-name">Navn <span class="optional">(optional)</span></label>
+                    <input id="employee-name" 
+                           type="text" 
+                           @bind="inviteName" 
+                           class="form-input" 
+                           placeholder="Medarbejders navn (kan udfyldes senere)..." />
+                </div>
+
+                <div class="form-group">
+                    <label for="employee-team">Team</label>
+                    <select id="employee-team" @bind="selectedTeam" class="form-select">
+                        <option value="">Vælg team</option>
+                        <option value="Team London">Team London</option>
+                        <option value="Team Dublin">Team Dublin</option>
+                        <option value="Team Copenhagen">Team Copenhagen</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="employee-position">Position <span class="optional">(optional)</span></label>
+                    <select id="employee-position" @bind="selectedPosition" class="form-select">
+                        <option value="">Vælg position</option>
+                        <option value="Tekniker">Tekniker</option>
+                        <option value="Senior Tekniker">Senior Tekniker</option>
+                        <option value="Projektleder">Projektleder</option>
+                        <option value="Manager">Manager</option>
+                    </select>
+                </div>
+
+                <!-- Invitation Message Preview -->
+                <div class="invitation-preview">
+                    <h4>Invitation besked:</h4>
+                    <div class="preview-content">
+                        <p><strong>Emne:</strong> Invitation til AdeptTime Team</p>
+                        <p><strong>Besked:</strong></p>
+                        <div class="message-preview">
+                            Hej @(!string.IsNullOrEmpty(inviteName) ? inviteName : ""),
+                            <br><br>
+                            Du er blevet inviteret til at deltage i AdeptTime teamet.
+                            <br><br>
+                            Klik på linket nedenfor for at oprette din konto:
+                            <br>
+                            <span class="invite-link">https://adepttime.com/invite/@inviteGuid</span>
+                            <br><br>
+                            Velkommen til teamet!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="panel-footer">
+            <button class="cancel-button" @onclick="HandleClose">
+                Annuller
+            </button>
+            <button class="send-invite-button" @onclick="SendInvitation" disabled="@(!IsFormValid || isLoading)">
+                @if (isLoading)
+                {
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>Sender invitation...</span>
+                }
+                else
+                {
+                    <i class="fas fa-paper-plane"></i>
+                    <span>Send invitation</span>
+                }
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .employee-invite-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .employee-invite-overlay.visible {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .employee-invite-panel {
+        position: fixed;
+        top: 0;
+        right: -500px;
+        width: 500px;
+        height: 100%;
+        background: white;
+        box-shadow: -2px 0 20px rgba(0, 0, 0, 0.1);
+        transition: right 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        z-index: 1001;
+    }
+
+    .employee-invite-panel.open {
+        right: 0;
+    }
+
+    .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 24px 32px;
+        border-bottom: 1px solid #e9ecef;
+        background: #f8f9fa;
+    }
+
+    .panel-header h2 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 600;
+        color: #212529;
+    }
+
+    .close-button {
+        background: none;
+        border: none;
+        font-size: 20px;
+        color: #6c757d;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+
+    .close-button:hover {
+        background: #e9ecef;
+        color: #495057;
+    }
+
+    .panel-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 32px;
+    }
+
+    .form-section {
+        margin-bottom: 32px;
+    }
+
+    .form-group {
+        margin-bottom: 24px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        color: #374151;
+    }
+
+    .required {
+        color: #dc3545;
+        font-weight: 400;
+    }
+
+    .optional {
+        color: #6c757d;
+        font-weight: 400;
+    }
+
+    .form-input, .form-select {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e1e5e9;
+        border-radius: 8px;
+        font-size: 14px;
+        color: #374151;
+        background: white;
+        transition: all 0.2s ease;
+    }
+
+    .form-input:focus, .form-select:focus {
+        outline: none;
+        border-color: #938fbf;
+        box-shadow: 0 0 0 3px rgba(147, 143, 191, 0.1);
+    }
+
+    .form-input.error {
+        border-color: #dc3545;
+    }
+
+    .form-input::placeholder {
+        color: #9ca3af;
+    }
+
+    .error-message {
+        margin-top: 8px;
+        font-size: 12px;
+        color: #dc3545;
+    }
+
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .form-checkbox {
+        width: 18px;
+        height: 18px;
+        border: 2px solid #e1e5e9;
+        border-radius: 4px;
+        cursor: pointer;
+        accent-color: #938fbf;
+    }
+
+    .checkbox-label {
+        font-size: 14px;
+        font-weight: 500;
+        color: #374151;
+        cursor: pointer;
+        margin: 0;
+    }
+
+    .invitation-preview {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 24px;
+    }
+
+    .invitation-preview h4 {
+        margin: 0 0 16px 0;
+        font-size: 16px;
+        color: #374151;
+    }
+
+    .preview-content p {
+        margin: 0 0 8px 0;
+        font-size: 14px;
+        color: #374151;
+    }
+
+    .message-preview {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        padding: 16px;
+        margin-top: 8px;
+        font-size: 14px;
+        line-height: 1.5;
+        color: #374151;
+    }
+
+    .invite-link {
+        color: #938fbf;
+        text-decoration: underline;
+        font-weight: 500;
+    }
+
+    .panel-footer {
+        padding: 24px 32px;
+        border-top: 1px solid #e9ecef;
+        background: #f8f9fa;
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+    }
+
+    .cancel-button {
+        padding: 12px 24px;
+        border: 2px solid #e1e5e9;
+        border-radius: 8px;
+        background: white;
+        color: #6c757d;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .cancel-button:hover {
+        border-color: #c3c8ce;
+        color: #495057;
+    }
+
+    .send-invite-button {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        background: #938fbf;
+        color: white;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .send-invite-button:hover:not(:disabled) {
+        background: #7a75a8;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(147, 143, 191, 0.3);
+    }
+
+    .send-invite-button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .send-invite-button i {
+        font-size: 12px;
+    }
+
+    @@media (max-width: 768px) {
+        .employee-invite-panel {
+            width: 100%;
+            right: -100%;
+        }
+
+        .panel-header, .panel-content, .panel-footer {
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+    }
+</style>
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<Employee> OnEmployeeInvited { get; set; }
+
+    private string inviteEmail = "";
+    private string inviteName = "";
+    private string selectedTeam = "";
+    private string selectedPosition = "";
+    private string inviteGuid = "";
+    private bool isAdministrator = false;
+    private bool emailError = false;
+    private bool isLoading = false;
+
+    protected override void OnParametersSet()
+    {
+        if (IsVisible)
+        {
+            // Generate new invite GUID when panel opens
+            inviteGuid = Guid.NewGuid().ToString("N")[..8]; // Short GUID for demo
+        }
+    }
+
+    private bool IsFormValid => !string.IsNullOrWhiteSpace(inviteEmail) && IsValidEmail(inviteEmail);
+
+    private bool IsValidEmail(string email)
+    {
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email);
+            return addr.Address == email;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private async Task HandleClose()
+    {
+        ResetForm();
+        await OnClose.InvokeAsync();
+    }
+
+    private async Task SendInvitation()
+    {
+        emailError = false;
+
+        if (!IsValidEmail(inviteEmail))
+        {
+            emailError = true;
+            return;
+        }
+
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            // Simulate sending email (replace with actual email service)
+            await Task.Delay(2000); // Simulate email sending delay
+
+            // Create the invited employee object
+            var newEmployee = new Employee
+            {
+                Id = Random.Shared.Next(1000, 9999),
+                Name = !string.IsNullOrWhiteSpace(inviteName) ? inviteName : "Pending",
+                Team = selectedTeam,
+                Position = selectedPosition,
+                AvatarUrl = "https://via.placeholder.com/40x40/938fbf/white?text=" + (inviteName.Length > 0 ? inviteName[0] : "?")
+            };
+
+            // In a real application, you would:
+            // 1. Save the invitation to the database
+            // 2. Send actual email via email service
+            // 3. Generate a proper invitation link
+            
+            // For demo, just log the invitation details
+            Console.WriteLine($"Invitation sent to: {inviteEmail}");
+            Console.WriteLine($"Invite GUID: {inviteGuid}");
+            Console.WriteLine($"Team: {selectedTeam}");
+            Console.WriteLine($"Position: {selectedPosition}");
+
+            await OnEmployeeInvited.InvokeAsync(newEmployee);
+            await HandleClose();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error sending invitation: {ex.Message}");
+            // Handle error - show error message to user
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ResetForm()
+    {
+        inviteEmail = "";
+        inviteName = "";
+        selectedTeam = "";
+        selectedPosition = "";
+        inviteGuid = "";
+        isAdministrator = false;
+        emailError = false;
+        isLoading = false;
+    }
+}

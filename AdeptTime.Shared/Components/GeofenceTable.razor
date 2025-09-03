@@ -1,0 +1,217 @@
+@using AdeptTime.Shared.Models
+
+<div class="geofence-table-container">
+    <div class="table-wrapper">
+        <table class="geofence-table">
+            <thead>
+                <tr>
+                    <th class="checkbox-col">
+                        <input type="checkbox" class="table-checkbox" />
+                    </th>
+                    <th class="name-col">Navn</th>
+                    <th class="hours-col">Arbejdstid</th>
+                    <th class="address-col">Adresse</th>
+                    <th class="coordinate-col">Latitude</th>
+                    <th class="coordinate-col">Longitude</th>
+                    <th class="radius-col">Radius</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var rule in GeofenceRules)
+                {
+                    <tr class="table-row">
+                        <td class="checkbox-col">
+                            <input type="checkbox" class="table-checkbox" />
+                        </td>
+                        <td class="name-col">
+                            <span class="rule-name">@rule.Name</span>
+                        </td>
+                        <td class="hours-col">
+                            <span class="working-hours">@GetWorkingHours(rule)</span>
+                        </td>
+                        <td class="address-col">
+                            <span class="address-text">@rule.Address</span>
+                        </td>
+                        <td class="coordinate-col">
+                            <span class="coordinate-value">@rule.Latitude.ToString("F4")</span>
+                        </td>
+                        <td class="coordinate-col">
+                            <span class="coordinate-value">@rule.Longitude.ToString("F4")</span>
+                        </td>
+                        <td class="radius-col">
+                            <span class="radius-value">@(rule.RadiusKm)km</span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    .geofence-table-container {
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+    }
+
+    .geofence-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
+
+    .geofence-table th {
+        background: #F9FAFB;
+        color: #374151;
+        font-weight: 500;
+        text-align: left;
+        padding: 12px 16px;
+        border-bottom: 1px solid #E5E7EB;
+        white-space: nowrap;
+    }
+
+    .geofence-table td {
+        padding: 16px;
+        border-bottom: 1px solid #F3F4F6;
+        vertical-align: middle;
+    }
+
+    .table-row:hover {
+        background: #F9FAFB;
+    }
+
+    .table-row:last-child td {
+        border-bottom: none;
+    }
+
+    /* Column widths */
+    .checkbox-col {
+        width: 50px;
+        text-align: center;
+    }
+
+    .name-col {
+        width: 200px;
+        min-width: 150px;
+    }
+
+    .hours-col {
+        width: 150px;
+        min-width: 120px;
+    }
+
+    .address-col {
+        width: 300px;
+        min-width: 200px;
+    }
+
+    .coordinate-col {
+        width: 120px;
+        min-width: 100px;
+    }
+
+    .radius-col {
+        width: 100px;
+        min-width: 80px;
+    }
+
+    /* Content styling */
+    .table-checkbox {
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+    }
+
+    .rule-name {
+        font-weight: 500;
+        color: #111827;
+    }
+
+    .working-hours {
+        color: #374151;
+        font-family: 'Monaco', 'Menlo', monospace;
+        font-size: 13px;
+    }
+
+    .address-text {
+        color: #374151;
+    }
+
+    .coordinate-value {
+        color: #6B7280;
+        font-family: 'Monaco', 'Menlo', monospace;
+        font-size: 13px;
+    }
+
+    .radius-value {
+        color: #374151;
+        font-weight: 500;
+    }
+
+    /* Responsive design */
+    @@media (max-width: 1200px) {
+        .address-col {
+            width: 250px;
+            min-width: 180px;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .geofence-table th,
+        .geofence-table td {
+            padding: 12px 8px;
+            font-size: 13px;
+        }
+
+        .name-col {
+            width: 150px;
+            min-width: 120px;
+        }
+
+        .address-col {
+            width: 200px;
+            min-width: 150px;
+        }
+
+        .coordinate-col {
+            width: 100px;
+            min-width: 80px;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .geofence-table {
+            font-size: 12px;
+        }
+
+        .geofence-table th,
+        .geofence-table td {
+            padding: 8px 6px;
+        }
+
+        .working-hours,
+        .coordinate-value {
+            font-size: 11px;
+        }
+    }
+</style>
+
+@code {
+    [Parameter] public List<GeofenceRule> GeofenceRules { get; set; } = new();
+    [Parameter] public EventCallback<GeofenceRule> OnRuleSelected { get; set; }
+
+    private string GetWorkingHours(GeofenceRule rule)
+    {
+        if (rule.StartTime.HasValue && rule.EndTime.HasValue)
+        {
+            return $"{rule.StartTime.Value:hh\\:mm} - {rule.EndTime.Value:hh\\:mm}";
+        }
+        return "All day";
+    }
+} 

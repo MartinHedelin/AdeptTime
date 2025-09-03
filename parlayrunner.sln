@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 25.0.1706.14
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "parlayrunner", "parlayrunner\parlayrunner.csproj", "{4F2452B2-FD7D-4BA1-9716-A69BA847636A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdeptTime", "parlayrunner\parlayrunner.csproj", "{4F2452B2-FD7D-4BA1-9716-A69BA847636A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "parlayrunner.Shared", "parlayrunner.Shared\parlayrunner.Shared.csproj", "{B8730DEF-7EFB-464A-8DF6-E5C00F03BC93}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdeptTime.Shared", "AdeptTime.Shared\AdeptTime.Shared.csproj", "{B8730DEF-7EFB-464A-8DF6-E5C00F03BC93}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "parlayrunner.Web", "parlayrunner.Web\parlayrunner.Web.csproj", "{15BC2C9F-F5B0-49E2-B8B3-E2342E440026}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdeptTime.Web", "AdeptTime.Web\AdeptTime.Web.csproj", "{15BC2C9F-F5B0-49E2-B8B3-E2342E440026}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

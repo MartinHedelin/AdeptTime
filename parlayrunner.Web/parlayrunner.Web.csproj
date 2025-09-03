@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\parlayrunner.Shared\parlayrunner.Shared.csproj" />
+    <ProjectReference Include="..\AdeptTime.Shared\AdeptTime.Shared.csproj" />
   </ItemGroup>
 
 </Project>

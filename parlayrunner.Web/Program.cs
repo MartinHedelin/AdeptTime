@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using parlayrunner.Web;
-using parlayrunner.Shared.Interfaces;
-using parlayrunner.Shared.Services;
+using AdeptTime.Shared.Interfaces;
+using AdeptTime.Shared.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");

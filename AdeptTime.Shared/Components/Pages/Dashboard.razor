@@ -1,0 +1,371 @@
+@page "/"
+@page "/dashboard"
+@using AdeptTime.Shared.Models
+@using AdeptTime.Shared.Components
+
+<PageTitle>Dashboard</PageTitle>
+
+<AuthRedirect RequireAuth="true">
+<div class="dashboard-page">
+    <!-- User Profile Header -->
+    <div class="user-profile-section">
+        <div class="user-info">
+            <img src="@currentUser.AvatarUrl" alt="@currentUser.Name" class="user-avatar" />
+            <div class="user-details">
+                <div class="user-greeting">Hi</div>
+                <h2 class="user-name">@currentUser.Name</h2>
+                <div class="user-status">
+                    <span class="status-text">@currentUser.Status</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Today's Attendance Statistics -->
+    <div class="statistics-section">
+        <h3 class="section-title">Statistikker idag</h3>
+        <div class="attendance-stats">
+            @foreach (var stat in attendanceStats)
+            {
+                <StatisticCard Statistic="stat" OnCardClicked="HandleCardClick" />
+            }
+        </div>
+    </div>
+
+    <!-- Statistik 2 -->
+    <div class="statistics-section">
+        <h3 class="section-title">Statistik 2</h3>
+        <div class="stats-grid-5">
+            @foreach (var stat in statistics2)
+            {
+                <StatisticCard Statistic="stat" OnCardClicked="HandleCardClick" />
+            }
+        </div>
+    </div>
+
+    <!-- Statistik 3 -->
+    <div class="statistics-section">
+        <h3 class="section-title">Statistik 3</h3>
+        <div class="stats-grid-3">
+            @foreach (var stat in statistics3)
+            {
+                <StatisticCard Statistic="stat" OnCardClicked="HandleCardClick" />
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .dashboard-page {
+        background-color: #f8f9fa;
+        min-height: 100vh;
+        padding: 24px 32px;
+    }
+
+    .user-profile-section {
+        background: white;
+        border-radius: 16px;
+        padding: 24px 32px;
+        margin-bottom: 32px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+        display: flex;
+        align-items: center;
+        border: 1px solid #f3f4f6;
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .user-avatar {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #f3f4f6;
+    }
+
+    .user-details {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .user-greeting {
+        font-size: 16px;
+        color: #6B7280;
+        font-weight: 400;
+        margin: 0;
+    }
+
+    .user-name {
+        font-size: 28px;
+        font-weight: 700;
+        color: #111827;
+        margin: 0 0 8px 0;
+        line-height: 1.1;
+    }
+
+    .user-status {
+        margin-top: 4px;
+    }
+
+    .status-text {
+        font-size: 14px;
+        color: #6B7280;
+        font-weight: 400;
+        padding: 4px 8px;
+        background: #f3f4f6;
+        border-radius: 6px;
+        display: inline-block;
+    }
+
+    .statistics-section {
+        margin-bottom: 32px;
+    }
+
+    .section-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 16px;
+        margin-top: 0;
+    }
+
+    .attendance-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        margin-bottom: 32px;
+    }
+
+    .stats-grid-5 {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 20px;
+    }
+
+    .stats-grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+
+    /* Responsive design */
+    @@media (max-width: 1400px) {
+        .stats-grid-5 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
+    @@media (max-width: 1200px) {
+        .stats-grid-5 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .stats-grid-3 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .dashboard-page {
+            padding: 16px 20px;
+        }
+
+        .user-profile-section {
+            flex-direction: column;
+            gap: 16px;
+            align-items: flex-start;
+            padding: 20px;
+        }
+
+        .user-info {
+            width: 100%;
+        }
+
+        .user-status {
+            width: 100%;
+            justify-content: flex-start;
+        }
+
+        .attendance-stats,
+        .stats-grid-5,
+        .stats-grid-3 {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .dashboard-page {
+            padding: 12px 16px;
+        }
+
+        .user-profile-section {
+            padding: 16px;
+        }
+
+        .user-avatar {
+            width: 56px;
+            height: 56px;
+        }
+
+        .user-name {
+            font-size: 20px;
+        }
+
+        .section-title {
+            font-size: 16px;
+        }
+    }
+</style>
+
+@code {
+    private DashboardUser currentUser = new();
+    private List<DashboardStatistic> attendanceStats = new();
+    private List<DashboardStatistic> statistics2 = new();
+    private List<DashboardStatistic> statistics3 = new();
+
+    protected override void OnInitialized()
+    {
+        InitializeCurrentUser();
+        InitializeAttendanceStats();
+        InitializeStatistics2();
+        InitializeStatistics3();
+    }
+
+    private void InitializeCurrentUser()
+    {
+        currentUser = new DashboardUser
+        {
+            Id = 1,
+            Name = "Tom",
+            AvatarUrl = "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cG9ydHJhaXR8ZW58MHx8MHx8fDA%3D",
+            Workspace = "Workspace",
+            Status = "Starter ikke idag",
+            IsWorkingToday = false
+        };
+    }
+
+    private void InitializeAttendanceStats()
+    {
+        attendanceStats = new List<DashboardStatistic>
+        {
+            new DashboardStatistic
+            {
+                Id = 1,
+                Title = "Fremmødt til tiden",
+                Value = "83",
+                IconClass = "fas fa-check",
+                IconColor = "#9333EA",
+                Type = StatisticType.Attendance
+            },
+            new DashboardStatistic
+            {
+                Id = 2,
+                Title = "Forsinket fremmøde",
+                Value = "9",
+                IconClass = "fas fa-check",
+                IconColor = "#9333EA",
+                Type = StatisticType.Attendance
+            }
+        };
+    }
+
+    private void InitializeStatistics2()
+    {
+        statistics2 = new List<DashboardStatistic>
+        {
+            new DashboardStatistic
+            {
+                Id = 3,
+                Title = "Aktive sager",
+                Value = "15",
+                IconClass = "fas fa-shopping-cart",
+                IconColor = "#3B82F6",
+                Type = StatisticType.Active
+            },
+            new DashboardStatistic
+            {
+                Id = 4,
+                Title = "Medarbejdere",
+                Value = "81",
+                IconClass = "fas fa-user",
+                IconColor = "#10B981",
+                Type = StatisticType.Users
+            },
+            new DashboardStatistic
+            {
+                Id = 5,
+                Title = "Timer i denne uge",
+                Value = "387",
+                IconClass = "fas fa-shopping-cart",
+                IconColor = "#3B82F6",
+                Type = StatisticType.Time
+            },
+            new DashboardStatistic
+            {
+                Id = 6,
+                Title = "Timer i denne uge",
+                Value = "387",
+                IconClass = "fas fa-shopping-cart",
+                IconColor = "#3B82F6",
+                Type = StatisticType.Time
+            },
+            new DashboardStatistic
+            {
+                Id = 7,
+                Title = "Timer i denne uge",
+                Value = "387",
+                IconClass = "fas fa-shopping-cart",
+                IconColor = "#3B82F6",
+                Type = StatisticType.Time
+            }
+        };
+    }
+
+    private void InitializeStatistics3()
+    {
+        statistics3 = new List<DashboardStatistic>
+        {
+            new DashboardStatistic
+            {
+                Id = 8,
+                Title = "Aktive sager",
+                Value = "15",
+                IconClass = "fas fa-shopping-cart",
+                IconColor = "#3B82F6",
+                Type = StatisticType.Active
+            },
+            new DashboardStatistic
+            {
+                Id = 9,
+                Title = "Medarbejdere",
+                Value = "81",
+                IconClass = "fas fa-user",
+                IconColor = "#10B981",
+                Type = StatisticType.Users
+            },
+            new DashboardStatistic
+            {
+                Id = 10,
+                Title = "Timer i denne uge",
+                Value = "387",
+                IconClass = "fas fa-shopping-cart",
+                IconColor = "#3B82F6",
+                Type = StatisticType.Time
+            }
+        };
+    }
+
+    private Task HandleCardClick(DashboardStatistic statistic)
+    {
+        // TODO: Handle card click - navigate to detailed view or show modal
+        Console.WriteLine($"Clicked on {statistic.Title}: {statistic.Value}");
+        return Task.CompletedTask;
+    }
+}
+</AuthRedirect> 

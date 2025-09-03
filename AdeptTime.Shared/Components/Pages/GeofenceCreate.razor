@@ -1,0 +1,679 @@
+@page "/geofence-create"
+@using AdeptTime.Shared.Models
+@using AdeptTime.Shared.Components
+@using AdeptTime.Shared.Services
+@inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
+
+<PageTitle>Geofence regler</PageTitle>
+
+<div class="geofence-container">
+    <!-- Main Header using PageHeader component -->
+    <PageHeader 
+        Title="Geofence regler"
+        ShowSearchInput="true"
+        ShowCreateButton="true"
+        CreateButtonText="Opret"
+        OnFilterClicked="HandleFilterClick"
+        OnCreateOptionSelected="HandleCreateOptionSelected" />
+
+    <!-- Main Content -->
+    <div class="geofence-content">
+        <!-- Back Button -->
+        <div class="back-button-container">
+            <button class="back-button" @onclick="GoBack">
+                <i class="fas fa-chevron-left"></i>
+                Gå tilbage
+            </button>
+        </div>
+
+        <!-- Content Layout -->
+        <div class="content-layout">
+            <!-- Left Side - Form -->
+            <div class="form-section">
+                <!-- Name Field -->
+                <div class="form-group">
+                    <label class="form-label">Navn</label>
+                    <input type="text" class="form-input" placeholder="Tilføj geofence navn" @bind="geofenceName" />
+                </div>
+
+                <!-- Work Time Section -->
+                <div class="form-group">
+                    <label class="form-label">Arbejdstid <span class="optional">(Optional)</span></label>
+                    <div class="time-dropdowns">
+                        <select class="time-select" @bind="startTime">
+                            <option value="">Fra tidspunkt</option>
+                            @for (int hour = 0; hour < 24; hour++)
+                            {
+                                for (int minute = 0; minute < 60; minute += 30)
+                                {
+                                    var timeValue = $"{hour:D2}:{minute:D2}";
+                                    <option value="@timeValue">@timeValue</option>
+                                }
+                            }
+                        </select>
+                        <select class="time-select" @bind="endTime">
+                            <option value="">Til tidspunkt</option>
+                            @for (int hour = 0; hour < 24; hour++)
+                            {
+                                for (int minute = 0; minute < 60; minute += 30)
+                                {
+                                    var timeValue = $"{hour:D2}:{minute:D2}";
+                                    <option value="@timeValue">@timeValue</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Address Section -->
+                <div class="form-group">
+                    <label class="form-label">Adresse</label>
+                    <div class="address-section">
+                        <input type="text" class="form-input address-input" placeholder="Indtast adresse" @bind="address" />
+                        <button class="search-address-btn" @onclick="SearchAddress">
+                            Søg adresse
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Coordinates Section -->
+                <div class="coordinates-section">
+                    <div class="form-group">
+                        <label class="form-label">Latitude</label>
+                        <input type="text" class="form-input" placeholder="Tilføj latitude" @bind="latitude" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Longitude</label>
+                        <input type="text" class="form-input" placeholder="Tilføj longitude" @bind="longitude" />
+                    </div>
+                </div>
+
+                <!-- Radius Section -->
+                <div class="form-group radius-group">
+                    <label class="form-label">Radius: <span class="radius-value">@radiusKm km</span></label>
+                    <div class="slider-container">
+                        <input type="range" class="radius-slider" min="1" max="50" step="1" @bind="radiusKm" @oninput="OnRadiusChanged" />
+                        <div class="slider-track"></div>
+                    </div>
+                </div>
+
+                <!-- Add Button -->
+                <div class="form-group">
+                    <button class="add-geofence-btn" @onclick="AddGeofenceRule">
+                        <i class="fas fa-plus"></i>
+                        Tilføj ny geofence regel
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Side - Map -->
+            <div class="map-section">
+                <div class="map-container" id="geofence-map">
+                    <!-- Realistic Map Display -->
+                    <div class="map-display">
+                        <div class="map-controls">
+                            <button class="map-control zoom-in">+</button>
+                            <button class="map-control zoom-out">-</button>
+                        </div>
+                        <div class="map-background">
+                            <!-- Mock map with streets and areas -->
+                            <div class="map-overlay">
+                                <div class="location-marker" style="left: 45%; top: 35%;">
+                                    <div class="marker-pin"></div>
+                                    <div class="geofence-circle" style="width: @(radiusKm * 2)px; height: @(radiusKm * 2)px;"></div>
+                                </div>
+                                <div class="street street-1"></div>
+                                <div class="street street-2"></div>
+                                <div class="street street-3"></div>
+                                <div class="area area-1"></div>
+                                <div class="area area-2"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .geofence-container {
+        background-color: #f8f9fa;
+        min-height: 100vh;
+        padding: 0;
+    }
+
+    .geofence-content {
+        padding: 0 32px 32px 32px;
+    }
+
+    .back-button-container {
+        margin-bottom: 24px;
+    }
+
+    .back-button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: none;
+        border: none;
+        color: #6c757d;
+        font-size: 14px;
+        cursor: pointer;
+        padding: 8px 0;
+        transition: color 0.2s ease;
+    }
+
+    .back-button:hover {
+        color: #495057;
+    }
+
+    .back-button i {
+        font-size: 12px;
+    }
+
+    .content-layout {
+        display: grid;
+        grid-template-columns: 420px 1fr;
+        gap: 32px;
+        height: calc(100vh - 200px);
+    }
+
+    .form-section {
+        background: white;
+        border-radius: 12px;
+        padding: 32px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        height: fit-content;
+    }
+
+    .form-group {
+        margin-bottom: 24px;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 8px;
+    }
+
+    .optional {
+        font-weight: 400;
+        color: #6b7280;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 14px;
+        color: #374151;
+        background: #f9fafb;
+        transition: all 0.2s ease;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: #938fbf;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(147, 143, 191, 0.1);
+    }
+
+    .form-input::placeholder {
+        color: #9ca3af;
+    }
+
+    .time-dropdowns {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .time-select {
+        padding: 12px 16px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 14px;
+        color: #374151;
+        background: #f9fafb;
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8"><path d="M6 8L0 2h12z" fill="%23666"/></svg>');
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        padding-right: 40px;
+    }
+
+    .time-select:focus {
+        outline: none;
+        border-color: #938fbf;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(147, 143, 191, 0.1);
+    }
+
+    .address-section {
+        display: flex;
+        gap: 12px;
+    }
+
+    .address-input {
+        flex: 1;
+    }
+
+    .search-address-btn {
+        padding: 12px 20px;
+        background: #938fbf;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        white-space: nowrap;
+    }
+
+    .search-address-btn:hover {
+        background: #7a75a8;
+    }
+
+    .coordinates-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    .radius-group {
+        margin-bottom: 32px;
+    }
+
+    .radius-value {
+        color: #938fbf;
+        font-weight: 600;
+    }
+
+    .slider-container {
+        position: relative;
+        margin-top: 16px;
+    }
+
+    .radius-slider {
+        width: 100%;
+        height: 6px;
+        border-radius: 3px;
+        background: #e5e7eb;
+        outline: none;
+        appearance: none;
+        -webkit-appearance: none;
+        cursor: pointer;
+    }
+
+    .radius-slider::-webkit-slider-thumb {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #938fbf;
+        cursor: pointer;
+        border: 3px solid white;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .radius-slider::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #938fbf;
+        cursor: pointer;
+        border: 3px solid white;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .add-geofence-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        padding: 14px 20px;
+        background: #938fbf;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+    .add-geofence-btn:hover {
+        background: #7a75a8;
+    }
+
+    .add-geofence-btn i {
+        font-size: 12px;
+    }
+
+    .map-section {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        position: relative;
+    }
+
+    .map-container {
+        width: 100%;
+        height: 100%;
+        min-height: 500px;
+        position: relative;
+    }
+
+    .map-display {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        background: #e5f3e8;
+    }
+
+    .map-background {
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #e5f3e8 0%, #d4f1d9 50%, #c3efc8 100%);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .map-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    .map-controls {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        z-index: 100;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .map-control {
+        width: 32px;
+        height: 32px;
+        background: white;
+        border: 1px solid #d1d5db;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 16px;
+        cursor: pointer;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s ease;
+    }
+
+    .map-control:hover {
+        background: #f3f4f6;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    .street {
+        position: absolute;
+        background: white;
+        border-radius: 2px;
+        box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .street-1 {
+        width: 4px;
+        height: 60%;
+        left: 30%;
+        top: 20%;
+        transform: rotate(15deg);
+    }
+
+    .street-2 {
+        width: 80%;
+        height: 4px;
+        left: 10%;
+        top: 45%;
+    }
+
+    .street-3 {
+        width: 4px;
+        height: 40%;
+        left: 70%;
+        top: 30%;
+        transform: rotate(-10deg);
+    }
+
+    .area {
+        position: absolute;
+        background: rgba(147, 143, 191, 0.1);
+        border-radius: 8px;
+    }
+
+    .area-1 {
+        width: 30%;
+        height: 25%;
+        left: 15%;
+        top: 25%;
+    }
+
+    .area-2 {
+        width: 35%;
+        height: 30%;
+        left: 55%;
+        top: 40%;
+    }
+
+    .location-marker {
+        position: absolute;
+        z-index: 50;
+    }
+
+    .marker-pin {
+        width: 16px;
+        height: 16px;
+        background: #ef4444;
+        border: 3px solid white;
+        border-radius: 50%;
+        position: relative;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        animation: pulse 2s infinite;
+    }
+
+    .marker-pin::after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-top: 8px solid #ef4444;
+    }
+
+    .geofence-circle {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100px;
+        height: 100px;
+        border: 3px solid #938fbf;
+        border-radius: 50%;
+        background: rgba(147, 143, 191, 0.15);
+        animation: geofence-pulse 3s ease-in-out infinite;
+    }
+
+    @@keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+
+    @@keyframes geofence-pulse {
+        0% { 
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 0.8;
+        }
+        50% { 
+            transform: translate(-50%, -50%) scale(1.05);
+            opacity: 0.6;
+        }
+        100% { 
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 0.8;
+        }
+    }
+
+    @@media (max-width: 1200px) {
+        .content-layout {
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+
+        .map-section {
+            min-height: 400px;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .geofence-content {
+            padding: 0 16px 16px 16px;
+        }
+
+        .form-section {
+            padding: 24px;
+        }
+
+        .time-dropdowns,
+        .coordinates-section {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .address-section {
+            flex-direction: column;
+        }
+    }
+</style>
+
+@code {
+    private string geofenceName = "";
+    private string startTime = "";
+    private string endTime = "";
+    private string address = "";
+    private string latitude = "";
+    private string longitude = "";
+    private int radiusKm = 8;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await InitializeMap();
+        }
+    }
+
+    private async Task InitializeMap()
+    {
+        // Initialize map here - for now just a placeholder
+        // In a real application, you would integrate with a mapping service like Google Maps, OpenStreetMap, etc.
+        await Task.Delay(100);
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/geofence-regler");
+    }
+
+    private void OnRadiusChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var newRadius))
+        {
+            radiusKm = newRadius;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SearchAddress()
+    {
+        if (string.IsNullOrWhiteSpace(address))
+            return;
+
+        // Implement address search functionality
+        // This would typically call a geocoding service
+        await Task.Delay(100);
+        
+        // Mock coordinates for demonstration
+        latitude = "55.6761";
+        longitude = "12.5683";
+        StateHasChanged();
+    }
+
+    private async Task AddGeofenceRule()
+    {
+        if (string.IsNullOrWhiteSpace(geofenceName))
+        {
+            // Show validation error
+            return;
+        }
+
+        // Create new geofence rule
+        var newRule = new GeofenceRule
+        {
+            Id = Random.Shared.Next(1000, 9999),
+            Name = geofenceName,
+            Address = address,
+            Latitude = double.TryParse(latitude, out var lat) ? lat : 0,
+            Longitude = double.TryParse(longitude, out var lng) ? lng : 0,
+            RadiusKm = radiusKm,
+            StartTime = !string.IsNullOrEmpty(startTime) ? TimeSpan.Parse(startTime) : null,
+            EndTime = !string.IsNullOrEmpty(endTime) ? TimeSpan.Parse(endTime) : null,
+            IsActive = true,
+            CreatedAt = DateTime.Now
+        };
+
+        // Save the rule (implement your save logic here)
+        await SaveGeofenceRule(newRule);
+        
+        // Navigate back to the geofence list
+        Navigation.NavigateTo("/geofence-regler");
+    }
+
+    private async Task SaveGeofenceRule(GeofenceRule rule)
+    {
+        // Implement save logic here
+        await Task.Delay(100);
+    }
+
+    // PageHeader event handlers
+    private Task HandleFilterClick()
+    {
+        // Implement filter functionality
+        return Task.CompletedTask;
+    }
+
+    private Task HandleCreateOptionSelected(CreateType createType)
+    {
+        // Handle other create options if needed
+        return Task.CompletedTask;
+    }
+}

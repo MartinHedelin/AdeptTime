@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
-using parlayrunner;
-using parlayrunner.Shared.Interfaces;
-using parlayrunner.Shared.Services;
-using parlayrunner.Shared.ViewModels;
+using AdeptTime;
+using AdeptTime.Shared.Interfaces;
+using AdeptTime.Shared.Services;
+using AdeptTime.Shared.ViewModels;
 
 public static class MauiProgram
 {
@@ -11,21 +11,22 @@ public static class MauiProgram
         var builder = MauiApp.CreateBuilder();
         builder
             .UseMauiApp<App>()
+            .UseMauiMaps()
             .ConfigureFonts(fonts =>
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
             });
-        builder.Services.AddMauiBlazorWebView();
+
 #if DEBUG
-        builder.Services.AddBlazorWebViewDeveloperTools();
         builder.Logging.AddDebug();
 #endif
+
         // Services
         builder.Services.AddSingleton<ICloudService, CloudService>();
         builder.Services.AddSingleton<IAccountService, AccountService>();
         builder.Services.AddSingleton<IParlayService, ParlayService>();
 
-        // Register HomeViewModel as transient
+        // ViewModels
         builder.Services.AddTransient<HomeViewModel>();
         builder.Services.AddTransient<LoginViewModel>();
         builder.Services.AddTransient<ParlayViewModel>();

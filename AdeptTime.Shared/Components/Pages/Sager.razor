@@ -1,0 +1,601 @@
+@page "/sager"
+@using AdeptTime.Shared.Models
+@using AdeptTime.Shared.Components
+@using AdeptTime.Shared.Interfaces
+@using AdeptTime.Shared.Services
+@inject ISaegsService SaegsService
+@inject TeamSelectionService TeamService
+@inject NavigationManager Navigation
+
+<PageTitle>Sager</PageTitle>
+
+<AuthRedirect RequireAuth="true">
+<div class="sager-container">
+    <!-- Main Header using new PageHeader component -->
+    <PageHeader 
+        Title="Sager"
+        ShowSearchInput="false"
+        CreateButtonText="Opret"
+        OnFilterClicked="HandleFilterClick"
+        OnCreateOptionSelected="HandleCreateOptionSelected" />
+    
+    <!-- Secondary Filter Bar -->
+    <div class="filter-bar">
+        <div class="filter-left">
+            <div class="filter-group">
+                <select class="filter-select" @bind="selectedStatus">
+                    <option value="">Status</option>
+                    <option value="Badges">Badges</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Review">Review</option>
+                    <option value="Completed">Completed</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <select class="filter-select" @bind="selectedWeek">
+                    <option value="42">Week 42</option>
+                    <option value="41">Week 41</option>
+                    <option value="43">Week 43</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <button class="date-picker-btn">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <input type="date" class="date-input" @bind="selectedDate" />
+                <button class="date-picker-btn">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+            <div class="filter-group">
+                <div class="search-input-wrapper small">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" placeholder="Search anything..." class="search-input small" @bind="tableSearchQuery" />
+                </div>
+            </div>
+        </div>
+        <div class="filter-right">
+        </div>
+    </div>
+
+    <!-- Main Content Container -->
+    <div class="content-container @(isCreatePanelVisible || isCaseDetailVisible ? "panel-open" : "")">
+        <!-- Case Table -->
+        <CaseTable Cases="FilteredCases" OnCaseSelected="HandleCaseSelected" />
+    </div>
+
+    <!-- Create Case Panel -->
+    <CreateCasePanel 
+        IsVisible="isCreatePanelVisible"
+        OnClose="CloseCreatePanel"
+        OnCaseCreated="HandleCaseCreated"
+        Customers="customers"
+        Employees="employees" />
+
+    <!-- Employee Invite Panel -->
+    <EmployeeInvitePanel 
+        IsVisible="isEmployeeInvitePanelVisible"
+        OnClose="CloseEmployeeInvitePanel"
+        OnEmployeeInvited="HandleEmployeeInvited" />
+
+    <!-- Add Hours Panel -->
+    <AddHoursPanel 
+        IsVisible="isAddHoursPanelVisible"
+        OnClose="CloseAddHoursPanel"
+        OnHoursSubmitted="HandleHoursSubmitted" />
+
+    <!-- Case Detail View -->
+    <CaseDetailView 
+        IsVisible="isCaseDetailVisible"
+        SelectedCase="selectedCase"
+        OnClose="CloseCaseDetail" />
+</div>
+</AuthRedirect>
+
+<style>
+    .sager-container {
+        background-color: #f8f9fa;
+        min-height: 100vh;
+        padding: 0;
+        position: relative;
+    }
+
+    .content-container {
+        transition: margin-right 0.3s ease;
+        margin-right: 0;
+    }
+
+    .content-container.panel-open {
+        margin-right: 400px;
+    }
+
+    .filter-bar {
+        background: white;
+        padding: 16px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #e9ecef;
+        gap: 20px;
+    }
+
+    .filter-left, .filter-right {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .search-input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .search-input-wrapper.small {
+        max-width: 200px;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 12px;
+        color: #6c757d;
+        font-size: 14px;
+        z-index: 1;
+    }
+
+    .search-input {
+        padding: 10px 12px 10px 36px;
+        border: 1px solid #ced4da;
+        border-radius: 8px;
+        font-size: 14px;
+        width: 300px;
+        background: #f8f9fa;
+    }
+
+    .search-input.small {
+        width: 200px;
+        padding: 8px 10px 8px 32px;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+
+    .filter-select {
+        padding: 8px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        font-size: 14px;
+        background: white;
+        cursor: pointer;
+        min-width: 120px;
+    }
+
+    .date-picker-btn {
+        padding: 8px 10px;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        background: white;
+        cursor: pointer;
+        color: #6c757d;
+        font-size: 12px;
+    }
+
+    .date-input {
+        padding: 8px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        font-size: 14px;
+        background: white;
+    }
+
+
+
+    @@media (max-width: 768px) {
+        .content-container.panel-open {
+            margin-right: 0;
+        }
+        
+        .filter-bar {
+            flex-direction: column;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .filter-left, .filter-right {
+            width: 100%;
+            justify-content: space-between;
+        }
+    }
+</style>
+
+@code {
+    private string tableSearchQuery = "";
+    private string selectedStatus = "";
+    private string selectedWeek = "42";
+    private DateTime selectedDate = new DateTime(2022, 1, 22);
+    private bool isCreatePanelVisible = false;
+    private bool isEmployeeInvitePanelVisible = false;
+    private bool isAddHoursPanelVisible = false;
+    private bool isCaseDetailVisible = false;
+    private Case? selectedCase = null;
+
+    private List<Case> cases = new();
+    private List<Customer> customers = new();
+    private List<Employee> employees = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Subscribe to case changes
+        SaegsService.OnCasesChanged += OnCasesChanged;
+        
+        // Subscribe to team changes
+        TeamService.OnTeamChanged += HandleTeamSelectionChanged;
+        
+        // Load initial data
+        await LoadData();
+    }
+
+    private void HandleTeamSelectionChanged(string selectedTeam)
+    {
+        StateHasChanged();
+    }
+
+    private async Task LoadData()
+    {
+        cases = await SaegsService.GetCasesAsync();
+        customers = await SaegsService.GetCustomersAsync();
+        employees = await SaegsService.GetEmployeesAsync();
+        StateHasChanged();
+    }
+
+    private async void OnCasesChanged()
+    {
+        // Reload cases when they change
+        cases = await SaegsService.GetCasesAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        SaegsService.OnCasesChanged -= OnCasesChanged;
+        TeamService.OnTeamChanged -= HandleTeamSelectionChanged;
+    }
+
+
+
+    private void InitializeEmployees()
+    {
+        employees = new List<Employee>
+        {
+            new Employee { Id = 1, Name = "James Carter", Team = "Team London", AvatarUrl = "https://plus.unsplash.com/premium_photo-1671656349322-41de944d259b?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHhzZWFyY2h8MXx8cG9ydHJhaXR8ZW58MHx8MHx8fDA%3D" },
+            new Employee { Id = 2, Name = "Liam Anders", Team = "Team London", AvatarUrl = "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHhzZWFyY2h8Mnx8cG9ydHJhaXR8ZW58MHx8MHx8fDA%3D" },
+            new Employee { Id = 3, Name = "Noah Bennett", Team = "Team London", AvatarUrl = "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHhzZWFyY2h8Nnx8cG9ydHJhaXR8ZW58MHx8MHx8fDA%3D" }
+        };
+    }
+
+    private void InitializeCases()
+    {
+        cases = new List<Case>
+        {
+            new Case
+            {
+                Id = 1,
+                CaseNumber = "SAG-2025-0012",
+                Description = "Renovering af badeværelse - montering af fliser og VVS-arbejde",
+                Comment = "Materialer bestilt - forventet levering fredag.",
+                Customer = customers[0],
+                AssignedEmployee = employees[0],
+                Manager = employees[0],
+                Department = "VVS",
+                CompletedHours = 139,
+                TotalHours = 300,
+                StartDate = new DateTime(2022, 1, 22),
+                EndDate = new DateTime(2022, 1, 22),
+                Status = CaseStatus.Badges,
+                AttachmentCount = 2
+            },
+            new Case
+            {
+                Id = 2,
+                CaseNumber = "SAG-2025-0012",
+                Description = "Renovering af badeværelse - montering af fliser og VVS-arbejde",
+                Comment = "Materialer bestilt - forventet levering fredag.",
+                Customer = customers[0],
+                AssignedEmployee = employees[0],
+                Manager = employees[0],
+                Department = "VVS",
+                CompletedHours = 84,
+                TotalHours = 84,
+                StartDate = new DateTime(2022, 1, 22),
+                EndDate = new DateTime(2022, 1, 22),
+                Status = CaseStatus.Pending,
+                AttachmentCount = 4
+            },
+            new Case
+            {
+                Id = 3,
+                CaseNumber = "SAG-2025-0012",
+                Description = "Renovering af badeværelse - montering af fliser og VVS-arbejde",
+                Comment = "Materialer bestilt - forventet levering fredag.",
+                Customer = customers[0],
+                AssignedEmployee = employees[0],
+                Manager = employees[0],
+                Department = "VVS",
+                CompletedHours = 38,
+                TotalHours = 38,
+                StartDate = new DateTime(2022, 1, 22),
+                EndDate = new DateTime(2022, 1, 22),
+                Status = CaseStatus.Review,
+                AttachmentCount = 2
+            },
+            new Case
+            {
+                Id = 4,
+                CaseNumber = "SAG-2025-0012",
+                Description = "Renovering af badeværelse - montering af fliser og VVS-arbejde",
+                Comment = "Materialer bestilt - forventet levering fredag.",
+                Customer = customers[0],
+                AssignedEmployee = employees[0],
+                Manager = employees[0],
+                Department = "VVS",
+                CompletedHours = 84,
+                TotalHours = 84,
+                StartDate = new DateTime(2022, 1, 22),
+                EndDate = new DateTime(2022, 1, 22),
+                Status = CaseStatus.Badges,
+                AttachmentCount = 4
+            },
+            new Case
+            {
+                Id = 5,
+                CaseNumber = "SAG-2025-0012",
+                Description = "Renovering af badeværelse - montering af fliser og VVS-arbejde",
+                Comment = "Materialer bestilt - forventet levering fredag.",
+                Customer = customers[0],
+                AssignedEmployee = employees[0],
+                Manager = employees[0],
+                Department = "VVS",
+                CompletedHours = 38,
+                TotalHours = 38,
+                StartDate = new DateTime(2022, 1, 22),
+                EndDate = new DateTime(2022, 1, 22),
+                Status = CaseStatus.Badges,
+                AttachmentCount = 2
+            },
+            new Case
+            {
+                Id = 6,
+                CaseNumber = "SAG-2025-0012",
+                Description = "Renovering af badeværelse - montering af fliser og VVS-arbejde",
+                Comment = "Materialer bestilt - forventet levering fredag.",
+                Customer = customers[0],
+                AssignedEmployee = employees[0],
+                Manager = employees[0],
+                Department = "VVS",
+                CompletedHours = 84,
+                TotalHours = 84,
+                StartDate = new DateTime(2022, 1, 22),
+                EndDate = new DateTime(2022, 1, 22),
+                Status = CaseStatus.Badges,
+                AttachmentCount = 4
+            },
+            new Case
+            {
+                Id = 7,
+                CaseNumber = "SAG-2025-0012",
+                Description = "Renovering af badeværelse - montering af fliser og VVS-arbejde",
+                Comment = "Materialer bestilt - forventet levering fredag.",
+                Customer = customers[0],
+                AssignedEmployee = employees[0],
+                Manager = employees[0],
+                Department = "VVS",
+                CompletedHours = 38,
+                TotalHours = 38,
+                StartDate = new DateTime(2022, 1, 22),
+                EndDate = new DateTime(2022, 1, 22),
+                Status = CaseStatus.Badges,
+                AttachmentCount = 2
+            },
+            new Case
+            {
+                Id = 8,
+                CaseNumber = "SAG-2025-0012",
+                Description = "Renovering af badeværelse - montering af fliser og VVS-arbejde",
+                Comment = "Materialer bestilt - forventet levering fredag.",
+                Customer = customers[0],
+                AssignedEmployee = employees[0],
+                Manager = employees[0],
+                Department = "VVS",
+                CompletedHours = 84,
+                TotalHours = 84,
+                StartDate = new DateTime(2022, 1, 22),
+                EndDate = new DateTime(2022, 1, 22),
+                Status = CaseStatus.Badges,
+                AttachmentCount = 4
+            },
+            new Case
+            {
+                Id = 9,
+                CaseNumber = "SAG-2025-0012",
+                Description = "Renovering af badeværelse - montering af fliser og VVS-arbejde",
+                Comment = "Materialer bestilt - forventet levering fredag.",
+                Customer = customers[0],
+                AssignedEmployee = employees[0],
+                Manager = employees[0],
+                Department = "VVS",
+                CompletedHours = 38,
+                TotalHours = 38,
+                StartDate = new DateTime(2022, 1, 22),
+                EndDate = new DateTime(2022, 1, 22),
+                Status = CaseStatus.Badges,
+                AttachmentCount = 2
+            },
+            new Case
+            {
+                Id = 10,
+                CaseNumber = "SAG-2025-0012",
+                Description = "Renovering af badeværelse - montering af fliser og VVS-arbejde",
+                Comment = "Materialer bestilt - forventet levering fredag.",
+                Customer = customers[0],
+                AssignedEmployee = employees[0],
+                Manager = employees[0],
+                Department = "VVS",
+                CompletedHours = 84,
+                TotalHours = 84,
+                StartDate = new DateTime(2022, 1, 22),
+                EndDate = new DateTime(2022, 1, 22),
+                Status = CaseStatus.Badges,
+                AttachmentCount = 4
+            },
+            new Case
+            {
+                Id = 11,
+                CaseNumber = "SAG-2025-0012",
+                Description = "Renovering af badeværelse - montering af fliser og VVS-arbejde",
+                Comment = "Materialer bestilt - forventet levering fredag.",
+                Customer = customers[0],
+                AssignedEmployee = employees[0],
+                Manager = employees[0],
+                Department = "VVS",
+                CompletedHours = 38,
+                TotalHours = 38,
+                StartDate = new DateTime(2022, 1, 22),
+                EndDate = new DateTime(2022, 1, 22),
+                Status = CaseStatus.Badges,
+                AttachmentCount = 2
+            }
+        };
+    }
+
+    private List<Case> FilteredCases
+    {
+        get
+        {
+            var filtered = cases.AsEnumerable();
+
+            // Filter by team/department
+            if (!TeamService.IsAllTeamsSelected())
+            {
+                filtered = filtered.Where(c => 
+                    c.AssignedEmployee.Team == TeamService.SelectedTeam ||
+                    c.Manager.Team == TeamService.SelectedTeam ||
+                    c.Department == TeamService.SelectedTeam);
+            }
+
+            if (!string.IsNullOrEmpty(selectedStatus) && Enum.TryParse<CaseStatus>(selectedStatus, out var status))
+            {
+                filtered = filtered.Where(c => c.Status == status);
+            }
+
+            if (!string.IsNullOrEmpty(tableSearchQuery))
+            {
+                filtered = filtered.Where(c => 
+                    c.Description.Contains(tableSearchQuery, StringComparison.OrdinalIgnoreCase) ||
+                    c.CaseNumber.Contains(tableSearchQuery, StringComparison.OrdinalIgnoreCase) ||
+                    c.Customer.Name.Contains(tableSearchQuery, StringComparison.OrdinalIgnoreCase) ||
+                    c.AssignedEmployee.Name.Contains(tableSearchQuery, StringComparison.OrdinalIgnoreCase) ||
+                    c.Department.Contains(tableSearchQuery, StringComparison.OrdinalIgnoreCase) ||
+                    c.Comment.Contains(tableSearchQuery, StringComparison.OrdinalIgnoreCase));
+            }
+
+            return filtered.ToList();
+        }
+    }
+
+    private void OpenCreatePanel()
+    {
+        isCreatePanelVisible = true;
+    }
+
+    private void CloseCreatePanel()
+    {
+        isCreatePanelVisible = false;
+    }
+
+    private void HandleCaseSelected(Case caseItem)
+    {
+        selectedCase = caseItem;
+        isCaseDetailVisible = true;
+        isCreatePanelVisible = false; // Close create panel if open
+        StateHasChanged();
+    }
+
+    private void CloseCaseDetail()
+    {
+        isCaseDetailVisible = false;
+        selectedCase = null;
+        StateHasChanged();
+    }
+
+    private async Task HandleCaseCreated(Case newCase)
+    {
+        // The case is already added by CreateCasePanel via SaegsService
+        // We just need to handle any additional logic here if needed
+        // The service will notify us via OnCasesChanged event
+    }
+
+    // New handler methods for PageHeader events
+    private Task HandleFilterClick()
+    {
+        // TODO: Implement filter functionality
+        return Task.CompletedTask;
+    }
+
+    private Task HandleCreateOptionSelected(CreateType createType)
+    {
+        switch (createType)
+        {
+            case CreateType.Case:
+                isCreatePanelVisible = true;
+                break;
+            case CreateType.Employee:
+                isEmployeeInvitePanelVisible = true;
+                break;
+            case CreateType.Geofence:
+                Navigation.NavigateTo("/geofence-create");
+                break;
+            case CreateType.AddHours:
+                isAddHoursPanelVisible = true;
+                break;
+        }
+        return Task.CompletedTask;
+    }
+
+    private void CloseEmployeeInvitePanel()
+    {
+        isEmployeeInvitePanelVisible = false;
+    }
+
+    private void CloseAddHoursPanel()
+    {
+        isAddHoursPanelVisible = false;
+    }
+
+    private void HandleEmployeeInvited(Employee newEmployee)
+    {
+        // Add the new employee to the employees list
+        employees.Add(newEmployee);
+        StateHasChanged();
+    }
+
+    private void HandleHoursSubmitted(List<AddHoursPanel.TimeEntryData> hoursData)
+    {
+        // In Sager context, we could relate hours to specific cases or log for later processing
+        // For now, just log to console
+        Console.WriteLine($"Hours submitted from cases page: {hoursData.Count} entries");
+        foreach (var entry in hoursData)
+        {
+            Console.WriteLine($"  - {entry.Date:yyyy-MM-dd}: {entry.TotalHours} hours - {entry.Description}");
+        }
+        StateHasChanged();
+    }
+} 

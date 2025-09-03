@@ -1,7 +1,7 @@
 ﻿using ObjCRuntime;
 using UIKit;
 
-namespace parlayrunner;
+namespace AdeptTime;
 
 public class Program
 {

@@ -1,6 +1,6 @@
 ﻿using Foundation;
 
-namespace parlayrunner;
+namespace AdeptTime;
 
 [Register("AppDelegate")]
 public class AppDelegate : MauiUIApplicationDelegate

@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage 
+    x:Class="AdeptTime.Views.KalenderView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:maps="clr-namespace:Microsoft.Maui.Controls.Maps;assembly=Microsoft.Maui.Controls.Maps"
+    xmlns:components="clr-namespace:AdeptTime.Components"
+    Title="Kalender"
+    BackgroundColor="White"
+    Shell.NavBarIsVisible="False">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="260" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Custom Navigation Bar -->
+        <components:CustomNavigationBar Grid.Row="0" />
+
+        <!-- Day selector -->
+        <Grid Grid.Row="1" BackgroundColor="#4A4E7C" Padding="0,0,0,15">
+            <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                <StackLayout Orientation="Horizontal" Padding="20,0" Spacing="8">
+                    <Frame BackgroundColor="#4A4E7C" Padding="20,12" CornerRadius="0" Margin="0" BorderColor="White" HasShadow="False">
+                        <Label Text="MAN" FontSize="13" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" />
+                    </Frame>
+                    <Frame BackgroundColor="Transparent" Padding="20,12" CornerRadius="0" Margin="0" BorderColor="Transparent" HasShadow="False">
+                        <Label Text="TIR" FontSize="13" TextColor="#C8C8C8" HorizontalOptions="Center" />
+                    </Frame>
+                    <Frame BackgroundColor="Transparent" Padding="20,12" CornerRadius="0" Margin="0" BorderColor="Transparent" HasShadow="False">
+                        <Label Text="ONS" FontSize="13" TextColor="#C8C8C8" HorizontalOptions="Center" />
+                    </Frame>
+                    <Frame BackgroundColor="Transparent" Padding="20,12" CornerRadius="0" Margin="0" BorderColor="Transparent" HasShadow="False">
+                        <Label Text="TOR" FontSize="13" TextColor="#C8C8C8" HorizontalOptions="Center" />
+                    </Frame>
+                    <Frame BackgroundColor="Transparent" Padding="20,12" CornerRadius="0" Margin="0" BorderColor="Transparent" HasShadow="False">
+                        <Label Text="FRE" FontSize="13" TextColor="#C8C8C8" HorizontalOptions="Center" />
+                    </Frame>
+                    <Frame BackgroundColor="Transparent" Padding="20,12" CornerRadius="0" Margin="0" BorderColor="Transparent" HasShadow="False">
+                        <Label Text="LØR" FontSize="13" TextColor="#C8C8C8" HorizontalOptions="Center" />
+                    </Frame>
+                    <Frame BackgroundColor="Transparent" Padding="20,12" CornerRadius="0" Margin="0" BorderColor="Transparent" HasShadow="False">
+                        <Label Text="SØN" FontSize="13" TextColor="#C8C8C8" HorizontalOptions="Center" />
+                    </Frame>
+                </StackLayout>
+            </ScrollView>
+        </Grid>
+
+        <!-- Map Area -->
+        <Frame Grid.Row="2" Margin="0" Padding="0" HasShadow="False">
+            <Grid>
+                <maps:Map 
+                    x:Name="map"
+                    MapType="Street" />
+                
+                <!-- Map controls overlay -->
+                <StackLayout 
+                    Orientation="Vertical" 
+                    HorizontalOptions="End" 
+                    VerticalOptions="End" 
+                    Margin="15">
+                    
+                    <Button 
+                        Text="⛶" 
+                        FontSize="18"
+                        WidthRequest="44" 
+                        HeightRequest="44"
+                        BackgroundColor="White"
+                        TextColor="#333"
+                        CornerRadius="8"
+                        Margin="0,0,0,8" />
+                    
+                    <Button 
+                        Text="+" 
+                        FontSize="20"
+                        WidthRequest="44" 
+                        HeightRequest="44"
+                        BackgroundColor="White"
+                        TextColor="#333"
+                        CornerRadius="8"
+                        Margin="0,0,0,8" />
+                    
+                    <Button 
+                        Text="−" 
+                        FontSize="22"
+                        WidthRequest="44" 
+                        HeightRequest="44"
+                        BackgroundColor="White"
+                        TextColor="#333"
+                        CornerRadius="8" />
+                </StackLayout>
+            </Grid>
+        </Frame>
+
+        <!-- Date selector -->
+        <Grid Grid.Row="3" BackgroundColor="White" Padding="20,20,20,15">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackLayout Grid.Column="0" Orientation="Horizontal" VerticalOptions="Center">
+                <Label Text="Idag :" FontSize="16" TextColor="#999" Margin="0,0,8,0" />
+                <Label Text="Mandag d. 16 marts" FontSize="16" FontAttributes="Bold" TextColor="#333" />
+            </StackLayout>
+
+            <Button 
+                Grid.Column="1"
+                Text="+" 
+                FontSize="22"
+                FontAttributes="Bold"
+                WidthRequest="44" 
+                HeightRequest="44"
+                BackgroundColor="#6C63AC"
+                TextColor="White"
+                CornerRadius="22" />
+        </Grid>
+
+
+
+        <!-- Events list -->
+        <ScrollView Grid.Row="4">
+            <StackLayout Padding="20,20,20,100">
+                
+                <!-- Event 1 -->
+                <Frame BackgroundColor="White" Padding="15" CornerRadius="8" Margin="0,5" HasShadow="True">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Color indicator -->
+                        <Ellipse 
+                            Grid.Row="0" 
+                            Grid.RowSpan="2"
+                            Grid.Column="0"
+                            Fill="#6C63AC" 
+                            WidthRequest="12" 
+                            HeightRequest="12"
+                            VerticalOptions="Start"
+                            Margin="0,4,15,0" />
+
+                        <!-- Event details -->
+                        <StackLayout Grid.Row="0" Grid.Column="1">
+                            <Label Text="Åboulevarden 7, 1.tv" FontSize="16" FontAttributes="Bold" TextColor="#333" />
+                            <Label Text="6:00 - 14:30" FontSize="14" TextColor="#666" />
+                        </StackLayout>
+
+                        <!-- Time info -->
+                        <StackLayout Grid.Row="0" Grid.Column="2" HorizontalOptions="End">
+                            <Label Text="8.5 timer" FontSize="14" FontAttributes="Bold" TextColor="#333" />
+                            <Label Text="Alm. timer" FontSize="12" TextColor="#666" />
+                        </StackLayout>
+                    </Grid>
+                </Frame>
+
+                <!-- Event 2 -->
+                <Frame BackgroundColor="White" Padding="15" CornerRadius="8" Margin="0,5" HasShadow="True">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Color indicator -->
+                        <Ellipse 
+                            Grid.Row="0" 
+                            Grid.RowSpan="2"
+                            Grid.Column="0"
+                            Fill="#A05A72" 
+                            WidthRequest="12" 
+                            HeightRequest="12"
+                            VerticalOptions="Start"
+                            Margin="0,4,15,0" />
+
+                        <!-- Event details -->
+                        <StackLayout Grid.Row="0" Grid.Column="1">
+                            <Label Text="Åboulevarden 7, 1.tv" FontSize="16" FontAttributes="Bold" TextColor="#333" />
+                            <Label Text="14:30 - 15:30" FontSize="14" TextColor="#666" />
+                        </StackLayout>
+
+                        <!-- Time info -->
+                        <StackLayout Grid.Row="0" Grid.Column="2" HorizontalOptions="End">
+                            <Label Text="1 time" FontSize="14" FontAttributes="Bold" TextColor="#333" />
+                            <Label Text="Overtime" FontSize="12" TextColor="#666" />
+                        </StackLayout>
+                    </Grid>
+                </Frame>
+
+                <!-- Event 3 -->
+                <Frame BackgroundColor="White" Padding="15" CornerRadius="8" Margin="0,5" HasShadow="True">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Color indicator -->
+                        <Ellipse 
+                            Grid.Row="0" 
+                            Grid.RowSpan="2"
+                            Grid.Column="0"
+                            Fill="#E8A5C7" 
+                            WidthRequest="12" 
+                            HeightRequest="12"
+                            VerticalOptions="Start"
+                            Margin="0,4,15,0" />
+
+                        <!-- Event details -->
+                        <StackLayout Grid.Row="0" Grid.Column="1">
+                            <Label Text="Åboulevarden 7, 1.tv" FontSize="16" FontAttributes="Bold" TextColor="#333" />
+                            <Label Text="Firmabil" FontSize="14" TextColor="#666" />
+                        </StackLayout>
+
+                        <!-- Distance info -->
+                        <StackLayout Grid.Row="0" Grid.Column="2" HorizontalOptions="End">
+                            <Label Text="18.2 km" FontSize="14" FontAttributes="Bold" TextColor="#333" />
+                        </StackLayout>
+                    </Grid>
+                </Frame>
+
+                <!-- Event 4 -->
+                <Frame BackgroundColor="White" Padding="15" CornerRadius="8" Margin="0,5" HasShadow="True">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Color indicator -->
+                        <Ellipse 
+                            Grid.Row="0" 
+                            Grid.RowSpan="2"
+                            Grid.Column="0"
+                            Fill="#4A4E7C" 
+                            WidthRequest="12" 
+                            HeightRequest="12"
+                            VerticalOptions="Start"
+                            Margin="0,4,15,0" />
+
+                        <!-- Event details -->
+                        <StackLayout Grid.Row="0" Grid.Column="1">
+                            <Label Text="Åboulevarden 7, 1.tv" FontSize="16" FontAttributes="Bold" TextColor="#333" />
+                            <Label Text="Restaurant med kunde" FontSize="14" TextColor="#666" />
+                        </StackLayout>
+
+                        <!-- Cost info -->
+                        <StackLayout Grid.Row="0" Grid.Column="2" HorizontalOptions="End">
+                            <Label Text="450.00 kr" FontSize="14" FontAttributes="Bold" TextColor="#333" />
+                        </StackLayout>
+                    </Grid>
+                </Frame>
+
+
+            </StackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

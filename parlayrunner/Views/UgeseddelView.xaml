@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage 
+    x:Class="AdeptTime.Views.UgeseddelView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:components="clr-namespace:AdeptTime.Components"
+    Title="Ugeseddel"
+    BackgroundColor="White"
+    Shell.NavBarIsVisible="False">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Custom Navigation Bar -->
+        <components:CustomNavigationBar Grid.Row="0" />
+
+        <!-- Main Content -->
+        <StackLayout Grid.Row="1" Padding="20" VerticalOptions="Center" HorizontalOptions="Center">
+            <Label 
+                Text="Ugeseddel" 
+                FontSize="32" 
+                FontAttributes="Bold"
+                HorizontalOptions="Center" 
+                TextColor="#4A4E7C"
+                Margin="0,0,0,10" />
+            
+            <Label 
+                Text="This view will show weekly time sheets and reports." 
+                FontSize="16" 
+                HorizontalOptions="Center" 
+                TextColor="#666"
+                HorizontalTextAlignment="Center" />
+        </StackLayout>
+    </Grid>
+</ContentPage>
