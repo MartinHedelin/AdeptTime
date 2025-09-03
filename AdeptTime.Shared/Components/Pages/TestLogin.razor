@@ -1,0 +1,99 @@
+@page "/testlogin"
+@using parlayrunner.Shared.Models
+@using parlayrunner.Shared.Interfaces
+@inject NavigationManager NavigationManager
+@inject IUserService UserService
+
+<div style="padding: 2rem; max-width: 400px; margin: 0 auto;">
+    <h2>Test Login (No AuthRedirect)</h2>
+    
+    <div style="margin: 1rem 0;">
+        <label>Email:</label>
+        <input @bind="email" type="email" style="width: 100%; padding: 0.5rem; margin: 0.5rem 0;" />
+    </div>
+    
+    <div style="margin: 1rem 0;">
+        <label>Password:</label>
+        <input @bind="password" type="password" style="width: 100%; padding: 0.5rem; margin: 0.5rem 0;" />
+    </div>
+    
+    <button @onclick="HandleTestLogin" disabled="@isLoading" style="width: 100%; padding: 0.75rem; background: #4f46e5; color: white; border: none; border-radius: 4px;">
+        @if (isLoading)
+        {
+            <span>Testing...</span>
+        }
+        else
+        {
+            <span>Test Login</span>
+        }
+    </button>
+    
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div style="margin: 1rem 0; padding: 1rem; border-left: 4px solid #4f46e5; background: #f8f9fa;">
+            @message
+        </div>
+    }
+    
+    <div style="margin: 2rem 0; border-top: 1px solid #ddd; padding-top: 1rem;">
+        <h3>Test Users:</h3>
+        <p><strong>Admin:</strong> admin@company.com / password123</p>
+        <p><strong>Worker:</strong> worker@company.com / password123</p>
+    </div>
+</div>
+
+@code {
+    private string email = "";
+    private string password = "";
+    private string message = "";
+    private bool isLoading = false;
+
+    private async Task HandleTestLogin()
+    {
+        try
+        {
+            isLoading = true;
+            message = "";
+
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+            {
+                message = "Please enter both email and password";
+                return;
+            }
+
+            // Test database connection first
+            message = "Testing database connection...";
+            StateHasChanged();
+            await Task.Delay(500);
+
+            // Validate with Supabase database
+            bool isValid = await UserService.ValidatePasswordAsync(email, password);
+            
+            if (isValid)
+            {
+                // Get user info
+                var user = await UserService.GetUserByEmailAsync(email);
+                if (user != null)
+                {
+                    message = $"✅ SUCCESS! Logged in as: {user.Name} (Type: {(user.IsAdmin ? "Admin" : "Worker")})";
+                }
+                else
+                {
+                    message = "❌ User not found after validation";
+                }
+            }
+            else
+            {
+                message = "❌ Invalid email or password";
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"❌ Error: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

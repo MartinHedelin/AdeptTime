@@ -36,5 +36,9 @@
     <string>1.0</string>
     <key>CFBundleDisplayName</key>
     <string>AdeptTime</string>
+    <key>UIStatusBarStyle</key>
+    <string>UIStatusBarStyleLightContent</string>
+    <key>UIViewControllerBasedStatusBarAppearance</key>
+    <false/>
 </dict>
 </plist>
