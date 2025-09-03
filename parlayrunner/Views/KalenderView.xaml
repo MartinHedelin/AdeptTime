@@ -20,34 +20,46 @@
 
         <!-- Custom Navigation Bar -->
         <Grid Grid.Row="0" BackgroundColor="#4A4E7C" Padding="20,50,20,20">
-            <Label Text="AdeptTime" FontSize="22" FontAttributes="Bold" TextColor="White" VerticalOptions="Center" />
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            
+            <Image 
+                Grid.Column="0"
+                Source="at.png" 
+                WidthRequest="100"
+                HeightRequest="38"
+                HorizontalOptions="Start"
+                VerticalOptions="Center" />
+            
+            <Button 
+                Grid.Column="1"
+                Text="☰" 
+                FontSize="26"
+                TextColor="White"
+                BackgroundColor="Transparent"
+                VerticalOptions="Center"
+                BorderWidth="0" />
         </Grid>
 
         <!-- Day selector -->
         <Grid Grid.Row="1" BackgroundColor="#4A4E7C" Padding="0,0,0,15">
             <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
                 <StackLayout Orientation="Horizontal" Padding="20,0" Spacing="8">
-                    <Frame BackgroundColor="#4A4E7C" Padding="20,12" CornerRadius="0" Margin="0" BorderColor="White" HasShadow="False">
-                        <Label Text="MAN" FontSize="13" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" />
-                    </Frame>
-                    <Frame BackgroundColor="Transparent" Padding="20,12" CornerRadius="0" Margin="0" BorderColor="Transparent" HasShadow="False">
-                        <Label Text="TIR" FontSize="13" TextColor="#C8C8C8" HorizontalOptions="Center" />
-                    </Frame>
-                    <Frame BackgroundColor="Transparent" Padding="20,12" CornerRadius="0" Margin="0" BorderColor="Transparent" HasShadow="False">
-                        <Label Text="ONS" FontSize="13" TextColor="#C8C8C8" HorizontalOptions="Center" />
-                    </Frame>
-                    <Frame BackgroundColor="Transparent" Padding="20,12" CornerRadius="0" Margin="0" BorderColor="Transparent" HasShadow="False">
-                        <Label Text="TOR" FontSize="13" TextColor="#C8C8C8" HorizontalOptions="Center" />
-                    </Frame>
-                    <Frame BackgroundColor="Transparent" Padding="20,12" CornerRadius="0" Margin="0" BorderColor="Transparent" HasShadow="False">
-                        <Label Text="FRE" FontSize="13" TextColor="#C8C8C8" HorizontalOptions="Center" />
-                    </Frame>
-                    <Frame BackgroundColor="Transparent" Padding="20,12" CornerRadius="0" Margin="0" BorderColor="Transparent" HasShadow="False">
-                        <Label Text="LØR" FontSize="13" TextColor="#C8C8C8" HorizontalOptions="Center" />
-                    </Frame>
-                    <Frame BackgroundColor="Transparent" Padding="20,12" CornerRadius="0" Margin="0" BorderColor="Transparent" HasShadow="False">
-                        <Label Text="SØN" FontSize="13" TextColor="#C8C8C8" HorizontalOptions="Center" />
-                    </Frame>
+                    <!-- Selected weekday with bottom border only -->
+                    <Grid>
+                        <Label Text="MAN" FontSize="11" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" Padding="16,8" />
+                        <BoxView BackgroundColor="White" HeightRequest="2" VerticalOptions="End" HorizontalOptions="FillAndExpand" />
+                    </Grid>
+                    
+                    <!-- Unselected weekdays -->
+                    <Label Text="TIR" FontSize="11" TextColor="#C8C8C8" HorizontalOptions="Center" Padding="16,8" />
+                    <Label Text="ONS" FontSize="11" TextColor="#C8C8C8" HorizontalOptions="Center" Padding="16,8" />
+                    <Label Text="TOR" FontSize="11" TextColor="#C8C8C8" HorizontalOptions="Center" Padding="16,8" />
+                    <Label Text="FRE" FontSize="11" TextColor="#C8C8C8" HorizontalOptions="Center" Padding="16,8" />
+                    <Label Text="LØR" FontSize="11" TextColor="#C8C8C8" HorizontalOptions="Center" Padding="16,8" />
+                    <Label Text="SØN" FontSize="11" TextColor="#C8C8C8" HorizontalOptions="Center" Padding="16,8" />
                 </StackLayout>
             </ScrollView>
         </Grid>
@@ -99,27 +111,37 @@
         </Frame>
 
         <!-- Date selector -->
-        <Grid Grid.Row="3" BackgroundColor="White" Padding="20,20,20,15">
+        <Grid Grid.Row="3" BackgroundColor="White" Padding="20,15,20,12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
             <StackLayout Grid.Column="0" Orientation="Horizontal" VerticalOptions="Center">
-                <Label Text="Idag :" FontSize="16" TextColor="#999" Margin="0,0,8,0" />
-                <Label Text="Mandag d. 16 marts" FontSize="16" FontAttributes="Bold" TextColor="#333" />
+                <Label Text="Idag" FontSize="14" FontAttributes="Bold" TextColor="#333" Margin="0,0,8,0" />
+                <Label Text="Mandag d. 16 marts" FontSize="14" TextColor="#666" />
             </StackLayout>
 
-            <Button 
+            <Border 
                 Grid.Column="1"
-                Text="+" 
-                FontSize="22"
-                FontAttributes="Bold"
-                WidthRequest="44" 
-                HeightRequest="44"
-                BackgroundColor="#6C63AC"
-                TextColor="White"
-                CornerRadius="22" />
+                WidthRequest="36" 
+                HeightRequest="36"
+                BackgroundColor="#D5C6FE"
+                Stroke="#E0E0E0"
+                StrokeThickness="1"
+                Padding="0">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="6" />
+                </Border.StrokeShape>
+                
+                <Label 
+                    Text="+"
+                    FontSize="18"
+                    FontAttributes="Bold"
+                    TextColor="#404261"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center" />
+            </Border>
         </Grid>
 
 
@@ -154,14 +176,14 @@
 
                         <!-- Event details -->
                         <StackLayout Grid.Row="0" Grid.Column="1">
-                            <Label Text="Åboulevarden 7, 1.tv" FontSize="16" FontAttributes="Bold" TextColor="#333" />
-                            <Label Text="6:00 - 14:30" FontSize="14" TextColor="#666" />
+                            <Label Text="Åboulevarden 7, 1.tv" FontSize="14" FontAttributes="Bold" TextColor="#333" />
+                            <Label Text="6:00 - 14:30" FontSize="12" TextColor="#666" />
                         </StackLayout>
 
                         <!-- Time info -->
                         <StackLayout Grid.Row="0" Grid.Column="2" HorizontalOptions="End">
-                            <Label Text="8.5 timer" FontSize="14" FontAttributes="Bold" TextColor="#333" />
-                            <Label Text="Alm. timer" FontSize="12" TextColor="#666" />
+                            <Label Text="8.5 timer" FontSize="12" FontAttributes="Bold" TextColor="#333" />
+                            <Label Text="Alm. timer" FontSize="10" TextColor="#666" />
                         </StackLayout>
                     </Grid>
                 </Frame>

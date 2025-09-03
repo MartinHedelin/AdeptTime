@@ -22,18 +22,18 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             
-            <Label 
+            <Image 
                 Grid.Column="0"
-                Text="AdeptTime" 
-                FontSize="22" 
-                FontAttributes="Bold"
-                TextColor="White"
+                Source="at.png" 
+                WidthRequest="100"
+                HeightRequest="38"
+                HorizontalOptions="Start"
                 VerticalOptions="Center" />
             
             <Button 
                 Grid.Column="1"
                 Text="☰" 
-                FontSize="22"
+                FontSize="26"
                 TextColor="White"
                 BackgroundColor="Transparent"
                 VerticalOptions="Center"

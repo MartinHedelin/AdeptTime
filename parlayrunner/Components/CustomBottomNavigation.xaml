@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView 
+    x:Class="AdeptTime.Components.CustomBottomNavigation"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    BackgroundColor="#4A4E7C">
+    
+    <Grid Padding="8,12,8,20">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Kalender Tab -->
+        <Grid Grid.Column="0">
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnKalenderTapped" />
+            </Grid.GestureRecognizers>
+            <Border 
+                x:Name="KalenderBorder"
+                BackgroundColor="Transparent"
+                Stroke="#E8DEF9"
+                StrokeThickness="2"
+                IsVisible="True"
+                Margin="4,0"
+                Padding="8,6">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="12" />
+                </Border.StrokeShape>
+                
+                <StackLayout Orientation="Vertical" HorizontalOptions="Center" VerticalOptions="Center" Spacing="6">
+                    <Image 
+                        Source="naviconone.png"
+                        WidthRequest="17"
+                        HeightRequest="17"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center" />
+                    <Label 
+                        Text="Kalender"
+                        FontSize="9"
+                        TextColor="White"
+                        HorizontalOptions="Center"
+                        HorizontalTextAlignment="Center" />
+                </StackLayout>
+            </Border>
+            
+            <!-- Default state without border for unselected -->
+            <StackLayout 
+                x:Name="KalenderDefault"
+                Orientation="Vertical" 
+                HorizontalOptions="Center" 
+                VerticalOptions="Center" 
+                Spacing="6"
+                Margin="4,0"
+                Padding="8,6"
+                IsVisible="False">
+                <Image 
+                    Source="naviconone.png"
+                    WidthRequest="17"
+                    HeightRequest="17"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center" />
+                <Label 
+                    Text="Kalender"
+                    FontSize="9"
+                    TextColor="#C8C8C8"
+                    HorizontalOptions="Center"
+                    HorizontalTextAlignment="Center" />
+            </StackLayout>
+        </Grid>
+
+        <!-- Sager Tab -->
+        <Grid Grid.Column="1">
+            <Border 
+                x:Name="SagerBorder"
+                BackgroundColor="Transparent"
+                Stroke="#E8DEF9"
+                StrokeThickness="2"
+                IsVisible="False"
+                Margin="4,0"
+                Padding="8,6">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="12" />
+                </Border.StrokeShape>
+                
+                <StackLayout Orientation="Vertical" HorizontalOptions="Center" VerticalOptions="Center" Spacing="6">
+                    <Image 
+                        Source="navicontwo.png"
+                        WidthRequest="17"
+                        HeightRequest="17"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center" />
+                    <Label 
+                        Text="Sager"
+                        FontSize="9"
+                        TextColor="White"
+                        HorizontalOptions="Center"
+                        HorizontalTextAlignment="Center" />
+                </StackLayout>
+            </Border>
+            
+            <StackLayout 
+                x:Name="SagerDefault"
+                Orientation="Vertical" 
+                HorizontalOptions="Center" 
+                VerticalOptions="Center" 
+                Spacing="6"
+                Margin="4,0"
+                Padding="8,6"
+                IsVisible="True">
+                <Image 
+                    Source="navicontwo.png"
+                    WidthRequest="17"
+                    HeightRequest="17"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center" />
+                <Label 
+                    Text="Sager"
+                    FontSize="9"
+                    TextColor="#C8C8C8"
+                    HorizontalOptions="Center"
+                    HorizontalTextAlignment="Center" />
+            </StackLayout>
+            
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnSagerTapped" />
+            </Grid.GestureRecognizers>
+        </Grid>
+
+        <!-- Ugeseddel Tab -->
+        <Grid Grid.Column="2">
+            <Border 
+                x:Name="UgeseddelBorder"
+                BackgroundColor="Transparent"
+                Stroke="#E8DEF9"
+                StrokeThickness="2"
+                IsVisible="False"
+                Margin="4,0"
+                Padding="8,6">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="12" />
+                </Border.StrokeShape>
+                
+                <StackLayout Orientation="Vertical" HorizontalOptions="Center" VerticalOptions="Center" Spacing="6">
+                    <Image 
+                        Source="naviconthree.png"
+                        WidthRequest="17"
+                        HeightRequest="17"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center" />
+                    <Label 
+                        Text="Ugeseddel"
+                        FontSize="9"
+                        TextColor="White"
+                        HorizontalOptions="Center"
+                        HorizontalTextAlignment="Center" />
+                </StackLayout>
+            </Border>
+            
+            <StackLayout 
+                x:Name="UgeseddelDefault"
+                Orientation="Vertical" 
+                HorizontalOptions="Center" 
+                VerticalOptions="Center" 
+                Spacing="6"
+                Margin="4,0"
+                Padding="8,6"
+                IsVisible="True">
+                <Image 
+                    Source="naviconthree.png"
+                    WidthRequest="17"
+                    HeightRequest="17"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center" />
+                <Label 
+                    Text="Ugeseddel"
+                    FontSize="9"
+                    TextColor="#C8C8C8"
+                    HorizontalOptions="Center"
+                    HorizontalTextAlignment="Center" />
+            </StackLayout>
+            
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnUgeseddelTapped" />
+            </Grid.GestureRecognizers>
+        </Grid>
+
+        <!-- Indstillinger Tab -->
+        <Grid Grid.Column="3">
+            <Border 
+                x:Name="IndstillingerBorder"
+                BackgroundColor="Transparent"
+                Stroke="#E8DEF9"
+                StrokeThickness="2"
+                IsVisible="False"
+                Margin="4,0"
+                Padding="8,6">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="12" />
+                </Border.StrokeShape>
+                
+                <StackLayout Orientation="Vertical" HorizontalOptions="Center" VerticalOptions="Center" Spacing="6">
+                    <Image 
+                        Source="naviconfour.png"
+                        WidthRequest="17"
+                        HeightRequest="17"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center" />
+                    <Label 
+                        Text="Indstillinger"
+                        FontSize="9"
+                        TextColor="White"
+                        HorizontalOptions="Center"
+                        HorizontalTextAlignment="Center" />
+                </StackLayout>
+            </Border>
+            
+            <StackLayout 
+                x:Name="IndstillingerDefault"
+                Orientation="Vertical" 
+                HorizontalOptions="Center" 
+                VerticalOptions="Center" 
+                Spacing="6"
+                Margin="4,0"
+                Padding="8,6"
+                IsVisible="True">
+                <Image 
+                    Source="naviconfour.png"
+                    WidthRequest="17"
+                    HeightRequest="17"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center" />
+                <Label 
+                    Text="Indstillinger"
+                    FontSize="9"
+                    TextColor="#C8C8C8"
+                    HorizontalOptions="Center"
+                    HorizontalTextAlignment="Center" />
+            </StackLayout>
+            
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnIndstillingerTapped" />
+            </Grid.GestureRecognizers>
+        </Grid>
+    </Grid>
+</ContentView>
