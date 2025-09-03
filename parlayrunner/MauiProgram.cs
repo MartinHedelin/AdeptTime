@@ -1,8 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using AdeptTime;
-using AdeptTime.Shared.Interfaces;
-using AdeptTime.Shared.Services;
-using AdeptTime.Shared.ViewModels;
 
 public static class MauiProgram
 {
@@ -21,15 +18,7 @@ public static class MauiProgram
         builder.Logging.AddDebug();
 #endif
 
-        // Services
-        builder.Services.AddSingleton<ICloudService, CloudService>();
-        builder.Services.AddSingleton<IAccountService, AccountService>();
-        builder.Services.AddSingleton<IParlayService, ParlayService>();
-
-        // ViewModels
-        builder.Services.AddTransient<HomeViewModel>();
-        builder.Services.AddTransient<LoginViewModel>();
-        builder.Services.AddTransient<ParlayViewModel>();
+        // Services - temporarily removed due to shared project dependencies
 
         return builder.Build();
     }

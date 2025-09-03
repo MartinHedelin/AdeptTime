@@ -1,17 +1,6 @@
-using parlayrunner.Shared.Models;
-
-namespace parlayrunner.Shared.Interfaces;
+namespace AdeptTime.Shared.Interfaces;
 
 public interface IUserService
 {
-    Task<User?> GetUserByEmailAsync(string email);
-    Task<User?> GetUserByIdAsync(Guid id);
-    Task<List<User>> GetAllUsersAsync();
-    Task<User> CreateUserAsync(User user);
-    Task<User> UpdateUserAsync(User user);
-    Task<bool> DeleteUserAsync(Guid id);
-    Task<bool> ValidatePasswordAsync(string email, string password);
-    Task<List<UserType>> GetUserTypesAsync();
-    string HashPassword(string password);
-    bool VerifyPassword(string password, string hash);
+    // Placeholder for user service interface
 }

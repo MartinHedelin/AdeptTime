@@ -68,9 +68,9 @@
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
     </ItemGroup>
 
-    <ItemGroup>
+    <!-- <ItemGroup>
       <ProjectReference Include="..\AdeptTime.Shared\AdeptTime.Shared.csproj" />
-    </ItemGroup>
+    </ItemGroup> -->
     <ItemGroup>
       <None Remove="Resources\Images\Email.png" />
     </ItemGroup>

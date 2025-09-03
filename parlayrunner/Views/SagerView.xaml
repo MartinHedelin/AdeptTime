@@ -3,36 +3,319 @@
     x:Class="AdeptTime.Views.SagerView"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:components="clr-namespace:AdeptTime.Components"
     Title="Sager"
-    BackgroundColor="White"
+    BackgroundColor="#F5F5F5"
     Shell.NavBarIsVisible="False">
 
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
         <!-- Custom Navigation Bar -->
-        <components:CustomNavigationBar Grid.Row="0" />
-
-        <!-- Main Content -->
-        <StackLayout Grid.Row="1" Padding="20" VerticalOptions="Center" HorizontalOptions="Center">
-            <Label 
-                Text="Sager" 
-                FontSize="32" 
-                FontAttributes="Bold"
-                HorizontalOptions="Center" 
-                TextColor="#4A4E7C"
-                Margin="0,0,0,10" />
+        <Grid Grid.Row="0" BackgroundColor="#4A4E7C" Padding="20,50,20,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
             
             <Label 
-                Text="This view will contain case management functionality." 
-                FontSize="16" 
-                HorizontalOptions="Center" 
-                TextColor="#666"
-                HorizontalTextAlignment="Center" />
-        </StackLayout>
+                Grid.Column="0"
+                Text="AdeptTime" 
+                FontSize="22" 
+                FontAttributes="Bold"
+                TextColor="White"
+                VerticalOptions="Center" />
+            
+            <Button 
+                Grid.Column="1"
+                Text="☰" 
+                FontSize="22"
+                TextColor="White"
+                BackgroundColor="Transparent"
+                VerticalOptions="Center"
+                BorderWidth="0" />
+        </Grid>
+
+        <!-- Case Number Section -->
+        <Grid Grid.Row="1" BackgroundColor="#4A4E7C" Padding="20,10,20,25">
+            <Label 
+                Text="Sag 100345"
+                FontSize="18"
+                TextColor="White"
+                VerticalOptions="Center" />
+        </Grid>
+
+        <!-- Icon Navigation Row -->
+        <Grid Grid.Row="2" BackgroundColor="White" Padding="20,25,20,25">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Timer Icon -->
+            <StackLayout Grid.Column="0" HorizontalOptions="Center" Spacing="8">
+                <Border 
+                    StrokeThickness="0"
+                    BackgroundColor="Transparent"
+                    Padding="15"
+                    HorizontalOptions="Center">
+                    <Image 
+                        Source="one.png"
+                        WidthRequest="24"
+                        HeightRequest="24"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center" />
+                </Border>
+                <Label 
+                    Text="Timer"
+                    FontSize="12"
+                    TextColor="#666"
+                    HorizontalOptions="Center" />
+            </StackLayout>
+
+            <!-- Varer Icon -->
+            <StackLayout Grid.Column="1" HorizontalOptions="Center" Spacing="8">
+                <Border 
+                    StrokeThickness="0"
+                    BackgroundColor="Transparent"
+                    Padding="15"
+                    HorizontalOptions="Center">
+                    <Image 
+                        Source="two.png"
+                        WidthRequest="24"
+                        HeightRequest="24"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center" />
+                </Border>
+                <Label 
+                    Text="Varer"
+                    FontSize="12"
+                    TextColor="#666"
+                    HorizontalOptions="Center" />
+            </StackLayout>
+
+            <!-- Dokumentation Icon -->
+            <StackLayout Grid.Column="2" HorizontalOptions="Center" Spacing="8">
+                <Border 
+                    StrokeThickness="0"
+                    BackgroundColor="Transparent"
+                    Padding="15"
+                    HorizontalOptions="Center">
+                    <Image 
+                        Source="three.png"
+                        WidthRequest="24"
+                        HeightRequest="24"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center" />
+                </Border>
+                <Label 
+                    Text="Dokumentation"
+                    FontSize="12"
+                    TextColor="#666"
+                    HorizontalOptions="Center" />
+            </StackLayout>
+
+            <!-- Ugesedler Icon -->
+            <StackLayout Grid.Column="3" HorizontalOptions="Center" Spacing="8">
+                <Border 
+                    StrokeThickness="0"
+                    BackgroundColor="Transparent"
+                    Padding="15"
+                    HorizontalOptions="Center">
+                    <Image 
+                        Source="four.png"
+                        WidthRequest="24"
+                        HeightRequest="24"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center" />
+                </Border>
+                <Label 
+                    Text="Ugesedler"
+                    FontSize="12"
+                    TextColor="#666"
+                    HorizontalOptions="Center" />
+            </StackLayout>
+        </Grid>
+
+        <!-- Case List -->
+        <ScrollView Grid.Row="3" BackgroundColor="#F5F5F5">
+            <StackLayout Padding="0" Spacing="0">
+                
+                <!-- Case Item 1 -->
+                <Border StrokeThickness="0" BackgroundColor="White" Margin="0,0,0,1">
+                    <Grid Padding="20,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        
+                        <Label 
+                            Grid.Column="0"
+                            Text="Sag"
+                            FontSize="16"
+                            TextColor="#333"
+                            VerticalOptions="Center" />
+                        
+                        <Label 
+                            Grid.Column="1"
+                            Text="15268"
+                            FontSize="16"
+                            TextColor="#333"
+                            VerticalOptions="Center" />
+                    </Grid>
+                </Border>
+
+                <!-- Case Item 2 -->
+                <Border StrokeThickness="0" BackgroundColor="White" Margin="0,0,0,1">
+                    <Grid Padding="20,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        
+                        <Label 
+                            Grid.Column="0"
+                            Text="Sag"
+                            FontSize="16"
+                            TextColor="#333"
+                            VerticalOptions="Center" />
+                        
+                        <Label 
+                            Grid.Column="1"
+                            Text="15268"
+                            FontSize="16"
+                            TextColor="#333"
+                            VerticalOptions="Center" />
+                    </Grid>
+                </Border>
+
+                <!-- Case Item 3 -->
+                <Border StrokeThickness="0" BackgroundColor="White" Margin="0,0,0,1">
+                    <Grid Padding="20,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        
+                        <Label 
+                            Grid.Column="0"
+                            Text="Sag"
+                            FontSize="16"
+                            TextColor="#333"
+                            VerticalOptions="Center" />
+                        
+                        <Label 
+                            Grid.Column="1"
+                            Text="15268"
+                            FontSize="16"
+                            TextColor="#333"
+                            VerticalOptions="Center" />
+                    </Grid>
+                </Border>
+
+                <!-- Case Item 4 -->
+                <Border StrokeThickness="0" BackgroundColor="White" Margin="0,0,0,1">
+                    <Grid Padding="20,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        
+                        <Label 
+                            Grid.Column="0"
+                            Text="Sag"
+                            FontSize="16"
+                            TextColor="#333"
+                            VerticalOptions="Center" />
+                        
+                        <Label 
+                            Grid.Column="1"
+                            Text="15268"
+                            FontSize="16"
+                            TextColor="#333"
+                            VerticalOptions="Center" />
+                    </Grid>
+                </Border>
+
+                <!-- Case Item 5 -->
+                <Border StrokeThickness="0" BackgroundColor="White" Margin="0,0,0,1">
+                    <Grid Padding="20,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        
+                        <Label 
+                            Grid.Column="0"
+                            Text="Sag"
+                            FontSize="16"
+                            TextColor="#333"
+                            VerticalOptions="Center" />
+                        
+                        <Label 
+                            Grid.Column="1"
+                            Text="15268"
+                            FontSize="16"
+                            TextColor="#333"
+                            VerticalOptions="Center" />
+                    </Grid>
+                </Border>
+
+                <!-- Case Item 6 -->
+                <Border StrokeThickness="0" BackgroundColor="White" Margin="0,0,0,1">
+                    <Grid Padding="20,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        
+                        <Label 
+                            Grid.Column="0"
+                            Text="Sag"
+                            FontSize="16"
+                            TextColor="#333"
+                            VerticalOptions="Center" />
+                        
+                        <Label 
+                            Grid.Column="1"
+                            Text="15268"
+                            FontSize="16"
+                            TextColor="#333"
+                            VerticalOptions="Center" />
+                    </Grid>
+                </Border>
+
+                <!-- Case Item 7 -->
+                <Border StrokeThickness="0" BackgroundColor="White" Margin="0,0,0,1">
+                    <Grid Padding="20,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        
+                        <Label 
+                            Grid.Column="0"
+                            Text="Sag"
+                            FontSize="16"
+                            TextColor="#333"
+                            VerticalOptions="Center" />
+                        
+                        <Label 
+                            Grid.Column="1"
+                            Text="15268"
+                            FontSize="16"
+                            TextColor="#333"
+                            VerticalOptions="Center" />
+                    </Grid>
+                </Border>
+
+            </StackLayout>
+        </ScrollView>
     </Grid>
 </ContentPage>

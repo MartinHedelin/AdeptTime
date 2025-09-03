@@ -20,21 +20,25 @@
     <TabBar>
         <ShellContent
             Title="Kalender"
+            Icon="naviconone.png"
             ContentTemplate="{DataTemplate local:KalenderView}"
             Route="kalender" />
 
         <ShellContent
             Title="Sager"
+            Icon="navicontwo.png"
             ContentTemplate="{DataTemplate local:SagerView}"
             Route="sager" />
 
         <ShellContent
             Title="Ugeseddel"
+            Icon="naviconthree.png"
             ContentTemplate="{DataTemplate local:UgeseddelView}"
             Route="ugeseddel" />
 
         <ShellContent
             Title="Indstillinger"
+            Icon="naviconfour.png"
             ContentTemplate="{DataTemplate local:IndstillingerView}"
             Route="indstillinger" />
     </TabBar>

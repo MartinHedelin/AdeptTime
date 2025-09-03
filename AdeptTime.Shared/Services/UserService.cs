@@ -1,10 +1,10 @@
 using Microsoft.Extensions.Logging;
-using parlayrunner.Shared.Interfaces;
-using parlayrunner.Shared.Models;
+using AdeptTime.Shared.Interfaces;
+using AdeptTime.Shared.Models;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace parlayrunner.Shared.Services;
+namespace AdeptTime.Shared.Services;
 
 public class UserService : IUserService
 {
