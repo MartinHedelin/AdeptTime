@@ -8,11 +8,15 @@ public partial class MainShell : ContentPage
     {
         InitializeComponent();
         BottomNavigation.SetSelectedTab("kalender");
+        
+        // Set initial content
+        var kalenderView = new KalenderView();
+        ContentArea.Content = kalenderView.Content;
     }
 
     private void OnTabSelected(object sender, string tabName)
     {
-        ContentView newView = tabName.ToLower() switch
+        ContentPage newView = tabName.ToLower() switch
         {
             "kalender" => new KalenderView(),
             "sager" => new SagerView(),
@@ -21,6 +25,6 @@ public partial class MainShell : ContentPage
             _ => new KalenderView()
         };
 
-        ContentArea.Content = newView;
+        ContentArea.Content = newView.Content;
     }
 }

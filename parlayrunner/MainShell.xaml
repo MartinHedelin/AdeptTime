@@ -15,9 +15,7 @@
         </Grid.RowDefinitions>
 
         <!-- Content Area -->
-        <ContentView x:Name="ContentArea" Grid.Row="0">
-            <views:KalenderView x:Name="CurrentView" />
-        </ContentView>
+        <ContentView x:Name="ContentArea" Grid.Row="0" />
 
         <!-- Custom Bottom Navigation -->
         <components:CustomBottomNavigation 

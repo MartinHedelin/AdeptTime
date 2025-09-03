@@ -2,7 +2,7 @@ namespace AdeptTime.Components;
 
 public partial class CustomBottomNavigation : ContentView
 {
-    public event EventHandler<string> TabSelected;
+    public event EventHandler<string>? TabSelected;
 
     public CustomBottomNavigation()
     {
