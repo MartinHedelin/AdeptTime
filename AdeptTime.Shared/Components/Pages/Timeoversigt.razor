@@ -31,7 +31,7 @@
             <div class="filter-group">
                 <select class="filter-select" @bind="selectedTeamId" @bind:event="onchange">
                     <option value="">All Teams</option>
-                    @foreach (var team in availableTeams)
+                    @foreach (var team in availableTeams.Where(t => t.Name != "All Teams"))
                     {
                         <option value="@team.Id">@team.Name</option>
                     }
@@ -393,9 +393,24 @@
         Console.WriteLine($"[Timeoversigt] Loaded {availableTeams.Count} teams and {timeRegistrations.Count} time registrations");
     }
 
-    private void HandleTeamSelectionChanged(string selectedTeam)
+    private async void HandleTeamSelectionChanged(string selectedTeam)
     {
-        StateHasChanged();
+        Console.WriteLine($"[Timeoversigt] Sidebar team selection changed to: {selectedTeam}");
+        
+        // Convert team name to team ID for our filter
+        if (selectedTeam == "All")
+        {
+            selectedTeamId = "";
+        }
+        else
+        {
+            var team = availableTeams.FirstOrDefault(t => t.Name == selectedTeam);
+            selectedTeamId = team?.Id.ToString() ?? "";
+        }
+        
+        // Reload data with new filter
+        await LoadTimeRegistrationsAsync();
+        await InvokeAsync(StateHasChanged);
     }
 
     public void Dispose()

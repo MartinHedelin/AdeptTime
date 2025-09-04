@@ -1,5 +1,9 @@
 @using AdeptTime.Shared.Models
 @using AdeptTime.Shared.Interfaces
+@using AdeptTime.Shared.Services
+@inject IUserService UserService
+@inject ITeamService TeamService
+@inject UserRoleService UserRoleService
 
 <div class="employee-invite-overlay @(IsVisible ? "visible" : "")">
     <div class="employee-invite-panel @(IsVisible ? "open" : "")">
@@ -12,7 +16,7 @@
         </div>
 
         <div class="panel-content">
-            <!-- Email Invitation Form -->
+            <!-- Employee Creation Form -->
             <div class="form-section">
                 <div class="form-group">
                     <div class="checkbox-group">
@@ -25,10 +29,10 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="employee-email">Email adresse <span class="required">(required)</span></label>
+                    <label for="employee-email">Email adresse <span class="required">*</span></label>
                     <input id="employee-email" 
                            type="email" 
-                           @bind="inviteEmail" 
+                           @bind="employeeEmail" 
                            class="form-input @(emailError ? "error" : "")" 
                            placeholder="Indtast medarbejders email..." />
                     @if (emailError)
@@ -38,54 +42,83 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="employee-name">Navn <span class="optional">(optional)</span></label>
+                    <label for="employee-name">Navn <span class="required">*</span></label>
                     <input id="employee-name" 
                            type="text" 
-                           @bind="inviteName" 
-                           class="form-input" 
-                           placeholder="Medarbejders navn (kan udfyldes senere)..." />
+                           @bind="employeeName" 
+                           class="form-input @(nameError ? "error" : "")" 
+                           placeholder="Medarbejders fulde navn..." />
+                    @if (nameError)
+                    {
+                        <div class="error-message">Navn er påkrævet</div>
+                    }
                 </div>
 
-                <div class="form-group">
-                    <label for="employee-team">Team</label>
-                    <select id="employee-team" @bind="selectedTeam" class="form-select">
-                        <option value="">Vælg team</option>
-                        <option value="Team London">Team London</option>
-                        <option value="Team Dublin">Team Dublin</option>
-                        <option value="Team Copenhagen">Team Copenhagen</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="employee-position">Position <span class="optional">(optional)</span></label>
-                    <select id="employee-position" @bind="selectedPosition" class="form-select">
-                        <option value="">Vælg position</option>
-                        <option value="Tekniker">Tekniker</option>
-                        <option value="Senior Tekniker">Senior Tekniker</option>
-                        <option value="Projektleder">Projektleder</option>
-                        <option value="Manager">Manager</option>
-                    </select>
-                </div>
-
-                <!-- Invitation Message Preview -->
-                <div class="invitation-preview">
-                    <h4>Invitation besked:</h4>
-                    <div class="preview-content">
-                        <p><strong>Emne:</strong> Invitation til AdeptTime Team</p>
-                        <p><strong>Besked:</strong></p>
-                        <div class="message-preview">
-                            Hej @(!string.IsNullOrEmpty(inviteName) ? inviteName : ""),
-                            <br><br>
-                            Du er blevet inviteret til at deltage i AdeptTime teamet.
-                            <br><br>
-                            Klik på linket nedenfor for at oprette din konto:
-                            <br>
-                            <span class="invite-link">https://adepttime.com/invite/@inviteGuid</span>
-                            <br><br>
-                            Velkommen til teamet!
-                        </div>
+                @if (!isAdministrator)
+                {
+                    <div class="form-group">
+                        <label for="employee-team">Team <span class="required">*</span></label>
+                        <select id="employee-team" @bind="selectedTeamId" class="form-select @(teamError ? "error" : "")">
+                            <option value="">Vælg team</option>
+                            @foreach (var team in availableTeams.Where(t => t.Name != "All Teams"))
+                            {
+                                <option value="@team.Id">@team.Name</option>
+                            }
+                        </select>
+                        @if (teamError)
+                        {
+                            <div class="error-message">Team er påkrævet for medarbejdere</div>
+                        }
                     </div>
+
+                    <div class="form-group">
+                        <label for="employee-position">Position <span class="required">*</span></label>
+                        <select id="employee-position" @bind="selectedPosition" class="form-select @(positionError ? "error" : "")">
+                            <option value="">Vælg position</option>
+                            <option value="Tekniker">Tekniker</option>
+                            <option value="Senior Tekniker">Senior Tekniker</option>
+                            <option value="Projektleder">Projektleder</option>
+                            <option value="Team Lead">Team Lead</option>
+                            <option value="Specialist">Specialist</option>
+                        </select>
+                        @if (positionError)
+                        {
+                            <div class="error-message">Position er påkrævet</div>
+                        }
+                    </div>
+                }
+
+                <div class="form-group">
+                    <label for="employee-phone">Telefonnummer <span class="optional">(optional)</span></label>
+                    <input id="employee-phone" 
+                           type="tel" 
+                           @bind="employeePhone" 
+                           class="form-input" 
+                           placeholder="+45 12 34 56 78..." />
                 </div>
+
+                <div class="form-group">
+                    <label for="employee-address">Adresse <span class="optional">(optional)</span></label>
+                    <input id="employee-address" 
+                           type="text" 
+                           @bind="employeeAddress" 
+                           class="form-input" 
+                           placeholder="Gade 123, 1234 By..." />
+                </div>
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-error">
+                        @errorMessage
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(successMessage))
+                {
+                    <div class="alert alert-success">
+                        @successMessage
+                    </div>
+                }
             </div>
         </div>
 
@@ -94,16 +127,16 @@
             <button class="cancel-button" @onclick="HandleClose">
                 Annuller
             </button>
-            <button class="send-invite-button" @onclick="SendInvitation" disabled="@(!IsFormValid || isLoading)">
+            <button class="create-button" @onclick="CreateEmployee" disabled="@(!IsFormValid || isLoading)">
                 @if (isLoading)
                 {
                     <i class="fas fa-spinner fa-spin"></i>
-                    <span>Sender invitation...</span>
+                    <span>Opretter medarbejder...</span>
                 }
                 else
                 {
-                    <i class="fas fa-paper-plane"></i>
-                    <span>Send invitation</span>
+                    <i class="fas fa-user-plus"></i>
+                    <span>Opret medarbejder</span>
                 }
             </button>
         </div>
@@ -228,7 +261,7 @@
         box-shadow: 0 0 0 3px rgba(147, 143, 191, 0.1);
     }
 
-    .form-input.error {
+    .form-input.error, .form-select.error {
         border-color: #dc3545;
     }
 
@@ -265,41 +298,23 @@
         margin: 0;
     }
 
-    .invitation-preview {
-        background: #f8f9fa;
-        border: 1px solid #e9ecef;
+    .alert {
+        padding: 12px 16px;
         border-radius: 8px;
-        padding: 20px;
-        margin-top: 24px;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
     }
 
-    .invitation-preview h4 {
-        margin: 0 0 16px 0;
-        font-size: 16px;
-        color: #374151;
+    .alert-error {
+        background-color: #fee2e2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
     }
 
-    .preview-content p {
-        margin: 0 0 8px 0;
-        font-size: 14px;
-        color: #374151;
-    }
-
-    .message-preview {
-        background: white;
-        border: 1px solid #e9ecef;
-        border-radius: 6px;
-        padding: 16px;
-        margin-top: 8px;
-        font-size: 14px;
-        line-height: 1.5;
-        color: #374151;
-    }
-
-    .invite-link {
-        color: #938fbf;
-        text-decoration: underline;
-        font-weight: 500;
+    .alert-success {
+        background-color: #d1fae5;
+        color: #059669;
+        border: 1px solid #a7f3d0;
     }
 
     .panel-footer {
@@ -328,7 +343,7 @@
         color: #495057;
     }
 
-    .send-invite-button {
+    .create-button {
         padding: 12px 24px;
         border: none;
         border-radius: 8px;
@@ -343,20 +358,20 @@
         gap: 8px;
     }
 
-    .send-invite-button:hover:not(:disabled) {
+    .create-button:hover:not(:disabled) {
         background: #7a75a8;
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(147, 143, 191, 0.3);
     }
 
-    .send-invite-button:disabled {
+    .create-button:disabled {
         opacity: 0.6;
         cursor: not-allowed;
         transform: none;
         box-shadow: none;
     }
 
-    .send-invite-button i {
+    .create-button i {
         font-size: 12px;
     }
 
@@ -378,25 +393,57 @@
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback<Employee> OnEmployeeInvited { get; set; }
 
-    private string inviteEmail = "";
-    private string inviteName = "";
-    private string selectedTeam = "";
+    private string employeeEmail = "";
+    private string employeeName = "";
+    private string selectedTeamId = "";
     private string selectedPosition = "";
-    private string inviteGuid = "";
+    private string employeePhone = "";
+    private string employeeAddress = "";
     private bool isAdministrator = false;
     private bool emailError = false;
+    private bool nameError = false;
+    private bool teamError = false;
+    private bool positionError = false;
     private bool isLoading = false;
+    private string? errorMessage;
+    private string? successMessage;
 
-    protected override void OnParametersSet()
+    private List<Team> availableTeams = new();
+
+    protected override async Task OnParametersSetAsync()
     {
-        if (IsVisible)
+        if (IsVisible && !availableTeams.Any())
         {
-            // Generate new invite GUID when panel opens
-            inviteGuid = Guid.NewGuid().ToString("N")[..8]; // Short GUID for demo
+            // Load teams when panel opens
+            await LoadTeamsAsync();
         }
     }
 
-    private bool IsFormValid => !string.IsNullOrWhiteSpace(inviteEmail) && IsValidEmail(inviteEmail);
+    private async Task LoadTeamsAsync()
+    {
+        try
+        {
+            availableTeams = await TeamService.GetAllTeamsAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to load teams: {ex.Message}");
+            availableTeams = new List<Team>();
+        }
+    }
+
+    private bool IsFormValid
+    {
+        get
+        {
+            var hasEmail = !string.IsNullOrWhiteSpace(employeeEmail) && IsValidEmail(employeeEmail);
+            var hasName = !string.IsNullOrWhiteSpace(employeeName);
+            var hasTeamIfNeeded = isAdministrator || !string.IsNullOrWhiteSpace(selectedTeamId);
+            var hasPositionIfNeeded = isAdministrator || !string.IsNullOrWhiteSpace(selectedPosition);
+            
+            return hasEmail && hasName && hasTeamIfNeeded && hasPositionIfNeeded;
+        }
+    }
 
     private bool IsValidEmail(string email)
     {
@@ -417,13 +464,34 @@
         await OnClose.InvokeAsync();
     }
 
-    private async Task SendInvitation()
+    private async Task CreateEmployee()
     {
-        emailError = false;
+        // Reset errors
+        emailError = nameError = teamError = positionError = false;
+        errorMessage = successMessage = null;
 
-        if (!IsValidEmail(inviteEmail))
+        // Validate form
+        if (!IsValidEmail(employeeEmail))
         {
             emailError = true;
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(employeeName))
+        {
+            nameError = true;
+            return;
+        }
+
+        if (!isAdministrator && string.IsNullOrWhiteSpace(selectedTeamId))
+        {
+            teamError = true;
+            return;
+        }
+
+        if (!isAdministrator && string.IsNullOrWhiteSpace(selectedPosition))
+        {
+            positionError = true;
             return;
         }
 
@@ -432,37 +500,54 @@
 
         try
         {
-            // Simulate sending email (replace with actual email service)
-            await Task.Delay(2000); // Simulate email sending delay
-
-            // Create the invited employee object
-            var newEmployee = new Employee
+            // Check if user already exists
+            var existingUser = await UserService.GetUserByEmailAsync(employeeEmail);
+            if (existingUser != null)
             {
-                Id = Random.Shared.Next(1000, 9999),
-                Name = !string.IsNullOrWhiteSpace(inviteName) ? inviteName : "Pending",
-                Team = selectedTeam,
-                Position = selectedPosition,
-                AvatarUrl = "https://via.placeholder.com/40x40/938fbf/white?text=" + (inviteName.Length > 0 ? inviteName[0] : "?")
+                errorMessage = "En medarbejder med denne email eksisterer allerede";
+                return;
+            }
+
+            // Create new user in Users table
+            var newUser = new User
+            {
+                Email = employeeEmail,
+                PasswordHash = "Test12345678", // Will be hashed in UserService
+                UserTypeId = isAdministrator ? 1 : 0,
+                Name = employeeName,
+                PhoneNumber = employeePhone,
+                Address = employeeAddress,
+                UserState = "invited" // New column for tracking user state
             };
 
-            // In a real application, you would:
-            // 1. Save the invitation to the database
-            // 2. Send actual email via email service
-            // 3. Generate a proper invitation link
+            var createdUser = await UserService.CreateUserAsync(newUser);
+
+            // Create Employee object for UI compatibility
+            var selectedTeam = availableTeams.FirstOrDefault(t => t.Id.ToString() == selectedTeamId);
+            var newEmployee = new Employee
+            {
+                Id = (int)createdUser.Id.GetHashCode(),
+                Name = createdUser.Name,
+                Team = selectedTeam?.Name ?? (isAdministrator ? "Management" : "Unknown"),
+                Position = selectedPosition,
+                AvatarUrl = createdUser.AvatarUrl ?? "https://plus.unsplash.com/premium_photo-1671656349322-41de944d259b?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8cG9ydHJhaXR8ZW58MHx8MHx8fDA%3D",
+                UserType = isAdministrator ? "Administrator" : "Worker"
+            };
+
+            Console.WriteLine($"✅ Employee created: {newUser.Name} ({newUser.Email}) - Type: {(isAdministrator ? "Administrator" : "Worker")} - State: invited");
+
+            successMessage = $"Medarbejder {employeeName} er blevet oprettet og inviteret!";
             
-            // For demo, just log the invitation details
-            Console.WriteLine($"Invitation sent to: {inviteEmail}");
-            Console.WriteLine($"Invite GUID: {inviteGuid}");
-            Console.WriteLine($"Team: {selectedTeam}");
-            Console.WriteLine($"Position: {selectedPosition}");
+            // Wait a moment to show success message
+            await Task.Delay(1500);
 
             await OnEmployeeInvited.InvokeAsync(newEmployee);
             await HandleClose();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error sending invitation: {ex.Message}");
-            // Handle error - show error message to user
+            Console.WriteLine($"Error creating employee: {ex.Message}");
+            errorMessage = "Der opstod en fejl ved oprettelse af medarbejderen. Prøv igen.";
         }
         finally
         {
@@ -473,13 +558,15 @@
 
     private void ResetForm()
     {
-        inviteEmail = "";
-        inviteName = "";
-        selectedTeam = "";
+        employeeEmail = "";
+        employeeName = "";
+        selectedTeamId = "";
         selectedPosition = "";
-        inviteGuid = "";
+        employeePhone = "";
+        employeeAddress = "";
         isAdministrator = false;
-        emailError = false;
+        emailError = nameError = teamError = positionError = false;
+        errorMessage = successMessage = null;
         isLoading = false;
     }
 }

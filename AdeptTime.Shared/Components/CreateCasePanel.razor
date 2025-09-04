@@ -83,6 +83,41 @@
                     </select>
                 </div>
 
+                <!-- Geofence Area Section -->
+                <div class="form-group">
+                    <label for="geofence-address">Geofence område</label>
+                    <input type="text" 
+                           id="geofence-address" 
+                           @bind="geofenceAddress" 
+                           @bind:event="onchange"
+                           @onchange="UpdateMapLocation"
+                           class="form-input" 
+                           placeholder="Indtast adresse for geofence område..." />
+                </div>
+
+                <div class="geofence-map-container">
+                    <div class="map-header">
+                        <span>Geofence område</span>
+                        <div class="radius-controls">
+                            <button type="button" class="radius-btn" @onclick="DecreaseRadius">-</button>
+                            <span class="radius-display">@geofenceRadius m</span>
+                            <button type="button" class="radius-btn" @onclick="IncreaseRadius">+</button>
+                        </div>
+                    </div>
+                    <div class="map-placeholder" style="height: 250px;">
+                        <div class="map-center">
+                            <div class="location-pin">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div class="geofence-circle" style="width: @(geofenceRadius / 2)px; height: @(geofenceRadius / 2)px;"></div>
+                        </div>
+                        <div class="map-info">
+                            <div class="address-display">@(!string.IsNullOrEmpty(geofenceAddress) ? geofenceAddress : "Indtast adresse for at vise på kort")</div>
+                            <div class="radius-info">Radius: @geofenceRadius meter</div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label class="checkbox-label">
                         <input type="checkbox" @bind="addLater" />
@@ -394,6 +429,116 @@
         background: #7c3aed;
     }
 
+    .geofence-map-container {
+        margin: 20px 0;
+        border: 1px solid #e1e5e9;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .map-header {
+        background: #f8f9fa;
+        padding: 12px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #e1e5e9;
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .radius-controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .radius-btn {
+        width: 30px;
+        height: 30px;
+        border: 1px solid #e1e5e9;
+        border-radius: 6px;
+        background: white;
+        color: #374151;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+
+    .radius-btn:hover {
+        background: #f8f9fa;
+        border-color: #938fbf;
+    }
+
+    .radius-display {
+        font-size: 14px;
+        color: #6c757d;
+        min-width: 60px;
+        text-align: center;
+    }
+
+    .map-placeholder {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .map-center {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .location-pin {
+        position: absolute;
+        z-index: 10;
+        color: #dc3545;
+        font-size: 24px;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    }
+
+    .geofence-circle {
+        border: 3px solid rgba(220, 53, 69, 0.4);
+        border-radius: 50%;
+        background: rgba(220, 53, 69, 0.1);
+        position: absolute;
+        transition: all 0.3s ease;
+        min-width: 50px;
+        min-height: 50px;
+        max-width: 200px;
+        max-height: 200px;
+    }
+
+    .map-info {
+        position: absolute;
+        bottom: 12px;
+        left: 12px;
+        right: 12px;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        color: #374151;
+    }
+
+    .address-display {
+        font-weight: 600;
+        margin-bottom: 2px;
+    }
+
+    .radius-info {
+        color: #6c757d;
+        font-size: 11px;
+    }
+
     /* Upload */
     .upload-area {
         border: 2px dashed #d1d5db;
@@ -486,6 +631,12 @@
     private bool addLater = false;
     private bool scheduleLater = false;
     private int currentStep = 1;
+    
+    // Geofence properties
+    private string geofenceAddress = "";
+    private int geofenceRadius = 100; // Default 100 meters
+    private double geofenceLat = 55.6761; // Copenhagen default
+    private double geofenceLng = 12.5683;
 
     protected override void OnParametersSet()
     {

@@ -31,6 +31,9 @@ public class User : BaseModel
     [Column("avatar_url")]
     public string? AvatarUrl { get; set; }
 
+    [Column("user_state")]
+    public string UserState { get; set; } = "active";
+
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
