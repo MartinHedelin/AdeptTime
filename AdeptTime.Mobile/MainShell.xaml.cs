@@ -1,16 +1,20 @@
 using AdeptTime.Views;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace AdeptTime;
 
 public partial class MainShell : ContentPage
 {
-    public MainShell()
+    private readonly IServiceProvider _serviceProvider;
+
+    public MainShell(IServiceProvider serviceProvider)
     {
+        _serviceProvider = serviceProvider;
         InitializeComponent();
         BottomNavigation.SetSelectedTab("kalender");
         
         // Set initial content
-        var kalenderView = new KalenderView();
+        var kalenderView = _serviceProvider.GetRequiredService<KalenderView>();
         ContentArea.Content = kalenderView.Content;
     }
 
@@ -18,11 +22,11 @@ public partial class MainShell : ContentPage
     {
         ContentPage newView = tabName.ToLower() switch
         {
-            "kalender" => new KalenderView(),
-            "sager" => new SagerView(),
-            "ugeseddel" => new UgeseddelView(),
-            "indstillinger" => new IndstillingerView(),
-            _ => new KalenderView()
+            "kalender" => _serviceProvider.GetRequiredService<KalenderView>(),
+            "sager" => _serviceProvider.GetRequiredService<SagerView>(),
+            "ugeseddel" => _serviceProvider.GetRequiredService<UgeseddelView>(),
+            "indstillinger" => _serviceProvider.GetRequiredService<IndstillingerView>(),
+            _ => _serviceProvider.GetRequiredService<KalenderView>()
         };
 
         ContentArea.Content = newView.Content;

@@ -37,6 +37,7 @@ public static class MauiProgram
         builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
         builder.Services.AddScoped<ITeamService, TeamService>();
         builder.Services.AddScoped<ITimeRegistrationService, TimeRegistrationService>();
+        builder.Services.AddScoped<ICaseService, CaseService>();
         builder.Services.AddSingleton<UserRoleService>();
         
         // Add mobile ViewModels
@@ -45,6 +46,11 @@ public static class MauiProgram
         // Add mobile Views
         builder.Services.AddTransient<AdeptTime.Views.LoginView>();
         builder.Services.AddTransient<AdeptTime.Views.KalenderView>();
+        builder.Services.AddTransient<AdeptTime.Views.SagerView>();
+        builder.Services.AddTransient<AdeptTime.Views.UgeseddelView>();
+        builder.Services.AddTransient<AdeptTime.Views.IndstillingerView>();
+        builder.Services.AddTransient<MainShell>();
+        builder.Services.AddTransient<App>();
 
         return builder.Build();
     }

@@ -117,8 +117,12 @@ public class LoginViewModel : INotifyPropertyChanged
             _userRoleService.SetCurrentUser(Email, user.IsAdmin);
             await _authService.LoginAsync(Email, Password);
 
-            // Navigate to main app
-            await Shell.Current.GoToAsync("//main");
+            // Navigate to main app by switching the main page
+            var serviceProvider = Microsoft.Maui.Controls.Application.Current?.Handler?.MauiContext?.Services;
+            if (serviceProvider != null)
+            {
+                Microsoft.Maui.Controls.Application.Current.MainPage = serviceProvider.GetRequiredService<MainShell>();
+            }
         }
         catch (Exception ex)
         {
