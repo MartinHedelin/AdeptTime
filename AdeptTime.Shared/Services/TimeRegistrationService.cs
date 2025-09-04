@@ -236,20 +236,35 @@ public class TimeRegistrationService : ITimeRegistrationService
         {
             registration.UpdatedAt = DateTime.UtcNow;
             
-            var client = await _supabaseService.GetClientAsync();
-            var response = await client.From<TimeRegistration>().Update(registration);
-
-            if (response?.Models?.FirstOrDefault() != null)
+            // Create DTO without navigation properties
+            var updateData = new
             {
-                var updated = response.Models.First();
-                await PopulateNavigationProperties(new List<TimeRegistration> { updated });
-                
-                _logger.LogInformation($"✅ Time registration updated in Supabase: {registration.Id}");
-                return updated;
+                status = registration.Status,
+                approved_by = registration.ApprovedBy,
+                approved_at = registration.ApprovedAt,
+                updated_at = registration.UpdatedAt
+            };
+
+            // Use HTTP client to avoid navigation property issues
+            using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Add("apikey", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0");
+            httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0");
+            httpClient.DefaultRequestHeaders.Add("Content-Type", "application/json");
+
+            var jsonContent = System.Text.Json.JsonSerializer.Serialize(updateData);
+            var content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
+
+            var response = await httpClient.PatchAsync($"http://127.0.0.1:54321/rest/v1/time_registrations?id=eq.{registration.Id}", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation($"✅ Time registration updated in Supabase: {registration.Id} - Status: {registration.Status}");
+                return registration;
             }
             else
             {
-                throw new Exception("Failed to update time registration in Supabase");
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new Exception($"HTTP error: {response.StatusCode} - {errorContent}");
             }
         }
         catch (Exception ex)
@@ -260,8 +275,10 @@ public class TimeRegistrationService : ITimeRegistrationService
             var existing = _demoRegistrations.FirstOrDefault(r => r.Id == registration.Id);
             if (existing != null)
             {
-                var index = _demoRegistrations.IndexOf(existing);
-                _demoRegistrations[index] = registration;
+                existing.Status = registration.Status;
+                existing.ApprovedBy = registration.ApprovedBy;
+                existing.ApprovedAt = registration.ApprovedAt;
+                existing.UpdatedAt = registration.UpdatedAt;
             }
             
             _logger.LogInformation($"✅ Time registration updated in demo mode: {registration.Id}");

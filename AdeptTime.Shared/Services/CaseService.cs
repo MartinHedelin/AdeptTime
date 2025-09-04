@@ -154,57 +154,45 @@ public class CaseService : ICaseService
     {
         try
         {
-            // Create DTO without navigation properties for database insert
-            var caseDto = new
+            // Create a clean CaseModel without navigation properties for insert
+            var cleanCase = new CaseModel
             {
-                case_number = caseModel.CaseNumber,
-                title = caseModel.Title,
-                description = caseModel.Description,
-                team_id = caseModel.TeamId,
-                created_by = caseModel.CreatedBy,
-                assigned_to = caseModel.AssignedTo,
-                customer_id = caseModel.CustomerId,
-                status = caseModel.Status,
-                priority = caseModel.Priority,
-                start_date = caseModel.StartDate,
-                end_date = caseModel.EndDate,
-                estimated_hours = caseModel.EstimatedHours,
-                completed_hours = caseModel.CompletedHours,
-                geofence_address = caseModel.GeofenceAddress,
-                geofence_latitude = caseModel.GeofenceLatitude,
-                geofence_longitude = caseModel.GeofenceLongitude,
-                geofence_radius = caseModel.GeofenceRadius
+                CaseNumber = caseModel.CaseNumber,
+                Title = caseModel.Title,
+                Description = caseModel.Description,
+                TeamId = caseModel.TeamId,
+                CreatedBy = caseModel.CreatedBy,
+                AssignedTo = caseModel.AssignedTo,
+                CustomerId = caseModel.CustomerId,
+                Status = caseModel.Status,
+                Priority = caseModel.Priority,
+                StartDate = caseModel.StartDate,
+                EndDate = caseModel.EndDate,
+                EstimatedHours = caseModel.EstimatedHours,
+                CompletedHours = caseModel.CompletedHours,
+                GeofenceAddress = caseModel.GeofenceAddress,
+                GeofenceLatitude = caseModel.GeofenceLatitude,
+                GeofenceLongitude = caseModel.GeofenceLongitude,
+                GeofenceRadius = caseModel.GeofenceRadius
+                // Explicitly NOT including navigation properties
             };
 
-            // Use HTTP client instead of Supabase client to avoid navigation property issues
-            using var httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Add("apikey", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0");
-            httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0");
+            // Use Supabase client with clean model
+            var client = await _supabaseService.GetClientAsync();
+            var response = await client.From<CaseModel>().Insert(cleanCase);
 
-            var jsonContent = System.Text.Json.JsonSerializer.Serialize(caseDto);
-            var content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
-
-            var response = await httpClient.PostAsync("http://127.0.0.1:54321/rest/v1/cases", content);
-
-            if (response.IsSuccessStatusCode)
+            if (response?.Models?.FirstOrDefault() != null)
             {
-                var responseJson = await response.Content.ReadAsStringAsync();
-                var createdCases = System.Text.Json.JsonSerializer.Deserialize<List<CaseModel>>(responseJson, new System.Text.Json.JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-
-                if (createdCases?.Any() == true)
-                {
-                    var created = createdCases.First();
-                    await PopulateNavigationProperties(new List<CaseModel> { created });
-                    
-                    _logger.LogInformation($"✅ Case created in Supabase: {caseModel.CaseNumber}");
-                    return created;
-                }
+                var created = response.Models.First();
+                await PopulateNavigationProperties(new List<CaseModel> { created });
+                
+                _logger.LogInformation($"✅ Case created in Supabase: {cleanCase.CaseNumber}");
+                return created;
             }
-
-            throw new Exception($"HTTP error: {response.StatusCode}");
+            else
+            {
+                throw new Exception("Failed to create case in Supabase");
+            }
         }
         catch (Exception ex)
         {
