@@ -1,6 +1,9 @@
 @using AdeptTime.Shared.Models
 @using AdeptTime.Shared.Interfaces
+@using AdeptTime.Shared.Services
 @inject ISaegsService SaegsService
+@inject ICaseService CaseService
+@inject UserRoleService UserRoleService
 
 <div class="create-case-overlay @(IsVisible ? "visible" : "")">
     <div class="create-case-panel @(IsVisible ? "open" : "")">
@@ -103,16 +106,16 @@
                             <button type="button" class="radius-btn" @onclick="IncreaseRadius">+</button>
                         </div>
                     </div>
-                    <div class="map-placeholder" style="height: 250px;">
+                    <div class="map-placeholder" style="height: 250px; background: @GetMapBackground();">
                         <div class="map-center">
-                            <div class="location-pin">
+                            <div class="location-pin" style="color: @GetPinColor();">
                                 <i class="fas fa-map-marker-alt"></i>
                             </div>
-                            <div class="geofence-circle" style="width: @(geofenceRadius / 2)px; height: @(geofenceRadius / 2)px;"></div>
+                            <div class="geofence-circle" style="width: @(Math.Min(geofenceRadius / 2, 150))px; height: @(Math.Min(geofenceRadius / 2, 150))px; border-color: @GetCircleColor();"></div>
                         </div>
                         <div class="map-info">
                             <div class="address-display">@(!string.IsNullOrEmpty(geofenceAddress) ? geofenceAddress : "Indtast adresse for at vise på kort")</div>
-                            <div class="radius-info">Radius: @geofenceRadius meter</div>
+                            <div class="radius-info">Radius: @geofenceRadius meter | Koordinater: @geofenceLat.ToString("F4"), @geofenceLng.ToString("F4")</div>
                         </div>
                     </div>
                 </div>
@@ -127,37 +130,21 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="start-date">Start dato</label>
-                        <select class="form-select date-select">
-                            <option value="2022-01-22">22 January 2022</option>
-                            <option value="2022-01-23">23 January 2022</option>
-                            <option value="2022-01-24">24 January 2022</option>
-                        </select>
+                        <label for="start-date">Start dato <span class="required">*</span></label>
+                        <input type="date" 
+                               id="start-date" 
+                               @bind="startDate" 
+                               class="form-input" />
                     </div>
                     <div class="form-group">
-                        <label for="end-date">Start dato</label>
-                        <select class="form-select date-select">
-                            <option value="2022-01-22">22 January 2022</option>
-                            <option value="2022-01-23">23 January 2022</option>
-                            <option value="2022-01-24">24 January 2022</option>
-                        </select>
+                        <label for="end-date">Slut dato <span class="required">*</span></label>
+                        <input type="date" 
+                               id="end-date" 
+                               @bind="endDate" 
+                               class="form-input" />
                     </div>
                 </div>
 
-                <div class="action-button-container">
-                    <button class="btn-schedule" @onclick="() => {}" type="button">
-                        <i class="fas fa-calendar"></i>
-                        Planlæg sag
-                    </button>
-                </div>
-
-                <div class="form-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" @bind="scheduleLater" />
-                        <span class="checkmark"></span>
-                        Planlæg senere
-                    </label>
-                </div>
             }
             else if (currentStep == 3)
             {
@@ -207,11 +194,11 @@
             <button class="btn-secondary" @onclick="ClosePanel">Cancel</button>
             @if (currentStep < 3)
             {
-                <button class="btn-primary" @onclick="NextStep">@(currentStep == 1 ? "Næste" : "Opret sag")</button>
+                <button class="btn-primary" @onclick="NextStep">Næste</button>
             }
             else
             {
-                <button class="btn-primary" @onclick="CreateCase">Næste</button>
+                <button class="btn-primary" @onclick="CreateCase">Planlæg sag</button>
             }
         </div>
     </div>
@@ -487,6 +474,7 @@
         align-items: center;
         justify-content: center;
         overflow: hidden;
+        transition: all 0.5s ease;
     }
 
     .map-center {
@@ -640,11 +628,19 @@
         { 
             _geofenceAddress = value;
             Console.WriteLine($"[CreateCase] Geofence address updated: {value}");
+            
+            // Update map coordinates based on address (demo locations)
+            UpdateMapCoordinates(value);
+            StateHasChanged();
         } 
     }
     private int geofenceRadius = 100; // Default 100 meters
     private double geofenceLat = 55.6761; // Copenhagen default
     private double geofenceLng = 12.5683;
+    
+    // Date properties
+    private DateTime startDate = DateTime.Today;
+    private DateTime endDate = DateTime.Today.AddDays(7);
 
     protected override void OnParametersSet()
     {
@@ -664,6 +660,10 @@
             Status = CaseStatus.Pending,
             CompletedHours = 0
         };
+        
+        // Reset date inputs
+        startDate = DateTime.Today;
+        endDate = DateTime.Today.AddDays(7);
         selectedCustomerId = 0;
         selectedEmployeeId = 0;
         selectedStatus = "Ny";
@@ -695,37 +695,70 @@
 
     private async Task CreateCase()
     {
-        if (selectedCustomerId > 0)
+        try
         {
-            newCase.Customer = Customers.FirstOrDefault(c => c.Id == selectedCustomerId) ?? new Customer();
-        }
+            // Create new CaseModel for database
+            var newDatabaseCase = new CaseModel
+            {
+                CaseNumber = newCase.CaseNumber,
+                Title = newCase.Description, // Use description as title for now
+                Description = newCase.Description,
+                CustomerId = selectedCustomerId > 0 ? selectedCustomerId : null,
+                Status = selectedStatus,
+                Priority = "Medium", // Default priority
+                StartDate = startDate,
+                EndDate = endDate,
+                EstimatedHours = int.TryParse(totalTime, out var hours) ? hours : null,
+                CompletedHours = 0,
+                
+                // Geofence data from Step 2
+                GeofenceAddress = geofenceAddress,
+                GeofenceLatitude = (decimal)geofenceLat,
+                GeofenceLongitude = (decimal)geofenceLng,
+                GeofenceRadius = geofenceRadius,
+                
+                // Set creator (get current user ID - for demo use first available)
+                CreatedBy = Guid.NewGuid(), // In real app: get from UserRoleService
+                AssignedTo = selectedEmployeeId > 0 ? Guid.NewGuid() : null // In real app: map employee ID to user ID
+            };
 
-        if (selectedEmployeeId > 0)
-        {
-            newCase.AssignedEmployee = Employees.FirstOrDefault(e => e.Id == selectedEmployeeId) ?? new Employee();
-        }
+            // Save to database via CaseService
+            var savedCase = await CaseService.CreateCaseAsync(newDatabaseCase);
+            Console.WriteLine($"✅ Case saved to database: {savedCase.CaseNumber} with geofence: {savedCase.GeofenceAddress}");
 
-        // Map selected status to enum
-        newCase.Status = selectedStatus switch
-        {
-            "Ny" => CaseStatus.Pending,
-            "Igangværende" => CaseStatus.Badges,
-            "Afsluttet" => CaseStatus.Review,
-            _ => CaseStatus.Pending
-        };
+            // Convert back to old Case model for compatibility
+            if (selectedCustomerId > 0)
+            {
+                newCase.Customer = Customers.FirstOrDefault(c => c.Id == selectedCustomerId) ?? new Customer();
+            }
 
-        // Set additional properties
-        if (int.TryParse(totalTime, out var hours))
-        {
+            if (selectedEmployeeId > 0)
+            {
+                newCase.AssignedEmployee = Employees.FirstOrDefault(e => e.Id == selectedEmployeeId) ?? new Employee();
+            }
+
+            newCase.Status = selectedStatus switch
+            {
+                "Ny" => CaseStatus.Pending,
+                "Igangværende" => CaseStatus.Badges,
+                "Afsluttet" => CaseStatus.Review,
+                _ => CaseStatus.Pending
+            };
+
             newCase.TotalHours = hours;
-        }
+            newCase.StartDate = startDate;
+            newCase.EndDate = endDate;
 
-        // Use the service to add the case directly
-        var addedCase = await SaegsService.AddCaseAsync(newCase);
-        
-        // Still call the parent callback for compatibility
-        await OnCaseCreated.InvokeAsync(addedCase);
-        await ClosePanel();
+            // Also use the old service for backward compatibility
+            var addedCase = await SaegsService.AddCaseAsync(newCase);
+            
+            await OnCaseCreated.InvokeAsync(addedCase);
+            await ClosePanel();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error creating case: {ex.Message}");
+        }
     }
 
 
@@ -747,5 +780,85 @@
             Console.WriteLine($"[CreateCase] Geofence radius decreased to: {geofenceRadius}m");
             StateHasChanged();
         }
+    }
+
+    private void UpdateMapCoordinates(string address)
+    {
+        // Simple geocoding for demo - in real app use Google Maps API
+        var lowerAddress = address.ToLower();
+        
+        if (lowerAddress.Contains("copenhagen") || lowerAddress.Contains("københavn"))
+        {
+            geofenceLat = 55.6761;
+            geofenceLng = 12.5683;
+            Console.WriteLine($"[CreateCase] Map moved to Copenhagen: {geofenceLat}, {geofenceLng}");
+        }
+        else if (lowerAddress.Contains("vesterbro"))
+        {
+            geofenceLat = 55.6684;
+            geofenceLng = 12.5588;
+            Console.WriteLine($"[CreateCase] Map moved to Vesterbro: {geofenceLat}, {geofenceLng}");
+        }
+        else if (lowerAddress.Contains("nørrebro"))
+        {
+            geofenceLat = 55.6867;
+            geofenceLng = 12.5700;
+            Console.WriteLine($"[CreateCase] Map moved to Nørrebro: {geofenceLat}, {geofenceLng}");
+        }
+        else if (lowerAddress.Contains("østerbro"))
+        {
+            geofenceLat = 55.7058;
+            geofenceLng = 12.5691;
+            Console.WriteLine($"[CreateCase] Map moved to Østerbro: {geofenceLat}, {geofenceLng}");
+        }
+        else if (lowerAddress.Contains("frederiksberg"))
+        {
+            geofenceLat = 55.6736;
+            geofenceLng = 12.5348;
+            Console.WriteLine($"[CreateCase] Map moved to Frederiksberg: {geofenceLat}, {geofenceLng}");
+        }
+        else if (lowerAddress.Contains("amager"))
+        {
+            geofenceLat = 55.6586;
+            geofenceLng = 12.5912;
+            Console.WriteLine($"[CreateCase] Map moved to Amager: {geofenceLat}, {geofenceLng}");
+        }
+        else if (!string.IsNullOrEmpty(address))
+        {
+            // Default to central Copenhagen for unknown addresses
+            geofenceLat = 55.6761;
+            geofenceLng = 12.5683;
+            Console.WriteLine($"[CreateCase] Unknown address, defaulting to Copenhagen center: {geofenceLat}, {geofenceLng}");
+        }
+    }
+
+    private string GetMapBackground()
+    {
+        var lowerAddress = geofenceAddress.ToLower();
+        
+        if (lowerAddress.Contains("vesterbro"))
+            return "linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)"; // Red for Vesterbro
+        else if (lowerAddress.Contains("nørrebro"))
+            return "linear-gradient(135deg, #74b9ff 0%, #0984e3 100%)"; // Blue for Nørrebro
+        else if (lowerAddress.Contains("østerbro"))
+            return "linear-gradient(135deg, #55a3ff 0%, #003d82 100%)"; // Dark blue for Østerbro
+        else if (lowerAddress.Contains("frederiksberg"))
+            return "linear-gradient(135deg, #fd79a8 0%, #e84393 100%)"; // Pink for Frederiksberg
+        else if (lowerAddress.Contains("amager"))
+            return "linear-gradient(135deg, #fdcb6e 0%, #e17055 100%)"; // Orange for Amager
+        else if (lowerAddress.Contains("copenhagen") || lowerAddress.Contains("københavn"))
+            return "linear-gradient(135deg, #00b894 0%, #00cec9 100%)"; // Teal for Copenhagen
+        else
+            return "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"; // Default purple
+    }
+
+    private string GetPinColor()
+    {
+        return string.IsNullOrEmpty(geofenceAddress) ? "#6c757d" : "#dc3545";
+    }
+
+    private string GetCircleColor()
+    {
+        return string.IsNullOrEmpty(geofenceAddress) ? "rgba(108, 117, 125, 0.4)" : "rgba(220, 53, 69, 0.4)";
     }
 } 

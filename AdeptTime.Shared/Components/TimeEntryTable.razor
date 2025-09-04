@@ -44,7 +44,7 @@
                                 }
                             </div>
                         </td>
-                        <td class="date-col">@group.Value.First().Date.ToString("dd MMMM yyyy")</td>
+                        <td class="date-col">@GetDateRangeDisplay(group.Value)</td>
                         <td class="time-col">@group.Value.First().CheckIn.ToString(@"hh\:mm")</td>
                         <td class="time-col">@group.Value.First().CheckOut.ToString(@"hh\:mm")</td>
                         <td class="time-col">@FormatTotalHours(group.Value.First().TotalHours)</td>
@@ -628,5 +628,76 @@
         }
 
         StateHasChanged();
+    }
+
+    private string GetDateRangeDisplay(List<TimeEntry> entries)
+    {
+        if (entries.Count == 1)
+        {
+            return entries.First().Date.ToString("dd MMMM yyyy");
+        }
+        
+        var sortedDates = entries.OrderBy(e => e.Date).ToList();
+        var firstDate = sortedDates.First().Date;
+        var lastDate = sortedDates.Last().Date;
+        
+        if (firstDate.Month == lastDate.Month && firstDate.Year == lastDate.Year)
+        {
+            // Same month: "22-25 januar 2024"
+            return $"{firstDate:dd}-{lastDate:dd} {firstDate:MMMM yyyy}";
+        }
+        else if (firstDate.Year == lastDate.Year)
+        {
+            // Same year: "22 jan - 25 feb 2024"
+            return $"{firstDate:dd MMM} - {lastDate:dd MMM yyyy}";
+        }
+        else
+        {
+            // Different years: "22 jan 2024 - 25 feb 2025"
+            return $"{firstDate:dd MMM yyyy} - {lastDate:dd MMM yyyy}";
+        }
+    }
+
+    // Fix main checkbox behavior - deselect when detail checkbox is clicked
+    private void ToggleDetailEntrySelection(int entryId, int employeeId, ChangeEventArgs e)
+    {
+        var isChecked = e?.Value is bool b && b;
+        
+        // If any detail checkbox is clicked, deselect the main checkbox
+        if (isChecked)
+        {
+            selectedEmployees.Remove(employeeId);
+        }
+        
+        StateHasChanged();
+    }
+
+    // Export to CSV functionality
+    public void ExportToCSV(string teamFilter = "")
+    {
+        try
+        {
+            var csvContent = new System.Text.StringBuilder();
+            
+            // CSV Header
+            csvContent.AppendLine("Medarbejder,Team,Dato,Check Ind,Check Ud,Timer Total,Timebank,Status,Godkendt Af");
+            
+            // CSV Data
+            foreach (var entry in TimeEntries)
+            {
+                var approverName = entry.ApprovedBy?.Name ?? "";
+                csvContent.AppendLine($"\"{entry.Employee.Name}\",\"{entry.Employee.Team}\",\"{entry.Date:dd/MM/yyyy}\",\"{entry.CheckIn:hh\\:mm}\",\"{entry.CheckOut:hh\\:mm}\",\"{FormatTotalHours(entry.TotalHours)}\",\"{FormatTimeBank(entry.TimeBank)}\",\"{GetStatusText(entry.Status)}\",\"{approverName}\"");
+            }
+            
+            // Download CSV (in real app, would trigger file download)
+            Console.WriteLine("=== CSV EXPORT ===");
+            Console.WriteLine(csvContent.ToString());
+            Console.WriteLine("=== END CSV ===");
+            Console.WriteLine($"Exported {TimeEntries.Count} time entries" + (!string.IsNullOrEmpty(teamFilter) ? $" for team: {teamFilter}" : ""));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ CSV Export failed: {ex.Message}");
+        }
     }
 } 

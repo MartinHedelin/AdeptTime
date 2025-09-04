@@ -68,7 +68,7 @@ public class CaseModel : BaseModel
     [Column("updated_at")]
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-    // Navigation properties (not stored in DB)
+    // Navigation properties (not stored in DB, excluded from Supabase operations)
     [JsonIgnore]
     public Team? Team { get; set; }
 

@@ -34,21 +34,31 @@
                     <option value="Completed">Completed</option>
                 </select>
             </div>
-            <div class="filter-group">
-                <select class="filter-select" @bind="selectedWeek">
-                    <option value="42">Week 42</option>
-                    <option value="41">Week 41</option>
-                    <option value="43">Week 43</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <button class="date-picker-btn">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-                <input type="date" class="date-input" @bind="selectedDate" />
-                <button class="date-picker-btn">
-                    <i class="fas fa-chevron-right"></i>
-                </button>
+            <div class="filter-group date-picker-container">
+                <input type="text" class="date-range-single" @bind="dateRangeText" placeholder="Vælg periode..." 
+                       @onclick="ToggleDatePicker" readonly />
+                @if (showDatePicker)
+                {
+                    <div class="date-picker-dropdown">
+                        <div class="date-picker-header">
+                            <span>Vælg periode</span>
+                            <button class="close-btn" @onclick="CloseDatePicker">×</button>
+                        </div>
+                        <div class="date-inputs">
+                            <div class="date-field">
+                                <label>Fra:</label>
+                                <input type="date" @bind="fromDate" @bind:event="oninput" />
+                            </div>
+                            <div class="date-field">
+                                <label>Til:</label>
+                                <input type="date" @bind="toDate" @bind:event="oninput" />
+                            </div>
+                        </div>
+                        <div class="date-picker-actions">
+                            <button class="apply-btn" @onclick="ApplyDateRange">Anvend</button>
+                        </div>
+                    </div>
+                }
             </div>
             <div class="filter-group">
                 <div class="search-input-wrapper small">
@@ -192,15 +202,130 @@
         font-size: 12px;
     }
 
-    .date-input {
+    .date-picker-container {
+        position: relative;
+    }
+
+    .date-range-single {
         padding: 8px 12px;
         border: 1px solid #ced4da;
         border-radius: 6px;
         font-size: 14px;
         background: white;
+        cursor: pointer;
+        min-width: 200px;
+        color: #495057;
+        width: 100%;
     }
 
+    .date-range-single:focus {
+        outline: none;
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
 
+    .date-picker-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background: white;
+        border: 1px solid #ced4da;
+        border-radius: 8px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+        margin-top: 4px;
+        padding: 20px;
+        min-width: 350px;
+        max-width: 400px;
+    }
+
+    .date-picker-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 16px;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+        color: #6c757d;
+        padding: 0;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .close-btn:hover {
+        color: #495057;
+        background: #f8f9fa;
+        border-radius: 50%;
+    }
+
+    .date-inputs {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+
+    .date-field {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .date-field label {
+        font-size: 12px;
+        color: #6c757d;
+        font-weight: 500;
+    }
+
+    .date-field input {
+        padding: 10px;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: border-color 0.2s ease;
+    }
+
+    .date-field input:focus {
+        outline: none;
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+
+    .date-picker-actions {
+        display: flex;
+        justify-content: flex-end;
+        padding-top: 12px;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .apply-btn {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+    .apply-btn:hover {
+        background: #0056b3;
+    }
 
     @@media (max-width: 768px) {
         .content-container.panel-open {
@@ -223,8 +348,10 @@
 @code {
     private string tableSearchQuery = "";
     private string selectedStatus = "";
-    private string selectedWeek = "42";
-    private DateTime selectedDate = new DateTime(2022, 1, 22);
+    private DateTime fromDate = new DateTime(2024, 1, 22);
+    private DateTime toDate = new DateTime(2024, 1, 28);
+    private bool showDatePicker = false;
+    private string dateRangeText = "";
     private bool isCreatePanelVisible = false;
     private bool isEmployeeInvitePanelVisible = false;
     private bool isAddHoursPanelVisible = false;
@@ -250,6 +377,7 @@
         await LoadData();
         await LoadTeamsAsync();
         await LoadCasesFromDatabaseAsync();
+        UpdateDateRange();
     }
 
     private async void HandleTeamSelectionChanged(string selectedTeam)
@@ -318,12 +446,18 @@
                 AssignedEmployee = new Employee 
                 { 
                     Id = (int)(dbCase.AssignedTo?.GetHashCode() ?? 0),
-                    Name = dbCase.AssignedToUser?.Name ?? "Ikke tildelt"
+                    Name = dbCase.AssignedToUser?.Name ?? "Ikke tildelt",
+                    AvatarUrl = dbCase.AssignedToUser?.AvatarUrl ?? "https://plus.unsplash.com/premium_photo-1671656349322-41de944d259b?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHhzZWFyY2h8MXx8cG9ydHJhaXR8ZW58MHx8MHx8fDA%3D",
+                    Team = dbCase.Team?.Name ?? "Unknown",
+                    UserType = dbCase.AssignedToUser?.UserTypeId == 1 ? "Administrator" : "Worker"
                 },
                 Manager = new Employee 
                 { 
                     Id = (int)(dbCase.CreatedBy?.GetHashCode() ?? 0),
-                    Name = dbCase.CreatedByUser?.Name ?? "Unknown"
+                    Name = dbCase.CreatedByUser?.Name ?? "Unknown",
+                    AvatarUrl = dbCase.CreatedByUser?.AvatarUrl ?? "https://plus.unsplash.com/premium_photo-1671656349322-41de944d259b?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHhzZWFyY2h8MXx8cG9ydHJhaXR8ZW58MHx8MHx8fDA%3D",
+                    Team = dbCase.Team?.Name ?? "Unknown",
+                    UserType = dbCase.CreatedByUser?.UserTypeId == 1 ? "Administrator" : "Worker"
                 },
                 Department = dbCase.Team?.Name ?? "Unknown",
                 CompletedHours = dbCase.CompletedHours,
@@ -643,9 +777,10 @@
 
     private async Task HandleCaseCreated(Case newCase)
     {
-        // The case is already added by CreateCasePanel via SaegsService
-        // We just need to handle any additional logic here if needed
-        // The service will notify us via OnCasesChanged event
+        // Reload cases from database when new case is created
+        Console.WriteLine("[Sager] New case created, reloading data from database...");
+        await LoadCasesFromDatabaseAsync();
+        StateHasChanged();
     }
 
     // New handler methods for PageHeader events
@@ -702,5 +837,33 @@
             Console.WriteLine($"  - {entry.Date:yyyy-MM-dd}: {entry.TotalHours} hours - {entry.Description}");
         }
         StateHasChanged();
+    }
+
+    private void ToggleDatePicker()
+    {
+        showDatePicker = !showDatePicker;
+        StateHasChanged();
+    }
+
+    private void CloseDatePicker()
+    {
+        showDatePicker = false;
+        StateHasChanged();
+    }
+
+    private async Task ApplyDateRange()
+    {
+        UpdateDateRange();
+        showDatePicker = false;
+        
+        // Reload cases with new date range
+        await LoadCasesFromDatabaseAsync();
+        StateHasChanged();
+    }
+
+    private void UpdateDateRange()
+    {
+        dateRangeText = $"{fromDate:dd/MM/yyyy} - {toDate:dd/MM/yyyy}";
+        InvokeAsync(StateHasChanged);
     }
 } 

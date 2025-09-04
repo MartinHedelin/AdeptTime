@@ -45,13 +45,6 @@
                     <option value="Afvist">Afvist</option>
                 </select>
             </div>
-            <div class="filter-group">
-                <select class="filter-select" @bind="selectedWeek">
-                    <option value="42">Week 42</option>
-                    <option value="41">Week 41</option>
-                    <option value="43">Week 43</option>
-                </select>
-            </div>
             <div class="filter-group date-picker-container">
                 <input type="text" class="date-range-single" @bind="dateRangeText" placeholder="Vælg periode..." 
                        @onclick="ToggleDatePicker" readonly />
@@ -87,6 +80,10 @@
                 <option value="Godkendt">Godkendt</option>
                 <option value="Afvist">Afvist</option>
             </select>
+            <button class="export-btn" @onclick="ExportToCSV">
+                <i class="fas fa-download"></i>
+                Export CSV
+            </button>
         </div>
     </div>
 
@@ -327,6 +324,27 @@
         background: #0056b3;
     }
 
+    .export-btn {
+        padding: 8px 16px;
+        background: #28a745;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .export-btn:hover {
+        background: #218838;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+    }
+
 
 
     @@media (max-width: 768px) {
@@ -357,7 +375,6 @@
             _ = OnTeamFilterChangedAsync(value);
         } 
     }
-    private string selectedWeek = "42";
     private DateTime fromDate = new DateTime(2024, 1, 22);
     private DateTime toDate = new DateTime(2024, 1, 28);
     private string pendingFilter = "";
@@ -430,10 +447,13 @@
         StateHasChanged();
     }
 
-    private void ApplyDateRange()
+    private async Task ApplyDateRange()
     {
         UpdateDateRange();
         showDatePicker = false;
+        
+        // Reload time registrations with new date range
+        await LoadTimeRegistrationsAsync();
         StateHasChanged();
     }
 
@@ -556,10 +576,47 @@
         }
     }
 
-    private void HandleStatusChanged(TimeEntry timeEntry)
+    private async Task HandleStatusChanged(TimeEntry timeEntry)
     {
-        // Handle status change logic here
+        try
+        {
+            // Find the corresponding TimeRegistration in our database list
+            var timeRegistration = timeRegistrations.FirstOrDefault(tr => tr.Id.GetHashCode() == timeEntry.Id);
+            
+            if (timeRegistration != null)
+            {
+                // Update the status in database
+                timeRegistration.Status = GetStatusText(timeEntry.Status);
+                
+                // If approved, set approval info
+                if (timeEntry.Status == TimeEntryStatus.Godkendt)
+                {
+                    timeRegistration.ApprovedAt = DateTime.UtcNow;
+                    // In real app: timeRegistration.ApprovedBy = current admin user ID
+                }
+                
+                // Save to database
+                await TimeRegistrationService.UpdateTimeRegistrationAsync(timeRegistration);
+                Console.WriteLine($"✅ Time registration status updated: {timeRegistration.Status} for {timeRegistration.User?.Name}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Failed to update time registration status: {ex.Message}");
+        }
+        
         StateHasChanged();
+    }
+    
+    private string GetStatusText(TimeEntryStatus status)
+    {
+        return status switch
+        {
+            TimeEntryStatus.Afventer => "Afventer",
+            TimeEntryStatus.Godkendt => "Godkendt", 
+            TimeEntryStatus.Afvist => "Afvist",
+            _ => "Afventer"
+        };
     }
 
     // New handler methods for PageHeader events
@@ -702,6 +759,17 @@
         // Reload time registrations when team filter changes
         await LoadTimeRegistrationsAsync();
         StateHasChanged();
+    }
+
+    private void ExportToCSV()
+    {
+        var currentTeamName = "";
+        if (!string.IsNullOrEmpty(selectedTeamId) && Guid.TryParse(selectedTeamId, out var teamId))
+        {
+            currentTeamName = availableTeams.FirstOrDefault(t => t.Id == teamId)?.Name ?? "";
+        }
+        
+        timeEntryTable?.ExportToCSV(currentTeamName);
     }
 
     private void LogCurrentStatus()
