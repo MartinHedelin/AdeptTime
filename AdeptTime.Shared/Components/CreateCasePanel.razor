@@ -697,6 +697,14 @@
     {
         try
         {
+            // Map UI status to database status
+            var dbStatus = selectedStatus switch
+            {
+                "Igangværende" => "I gang", // Fix the status mapping
+                "Afsluttet" => "Færdig",
+                _ => selectedStatus // "Ny", "Afventer" stay the same
+            };
+
             // Create new CaseModel for database
             var newDatabaseCase = new CaseModel
             {
@@ -704,7 +712,7 @@
                 Title = newCase.Description, // Use description as title for now
                 Description = newCase.Description,
                 CustomerId = selectedCustomerId > 0 ? selectedCustomerId : null,
-                Status = selectedStatus,
+                Status = dbStatus,
                 Priority = "Medium", // Default priority
                 StartDate = startDate,
                 EndDate = endDate,

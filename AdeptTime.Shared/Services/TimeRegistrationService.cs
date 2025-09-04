@@ -199,34 +199,49 @@ public class TimeRegistrationService : ITimeRegistrationService
     {
         try
         {
-            var client = await _supabaseService.GetClientAsync();
-            var response = await client.From<TimeRegistration>().Insert(registration);
+            _logger.LogInformation($"Creating time registration in Supabase for user: {registration.UserId}");
 
-            if (response?.Models?.FirstOrDefault() != null)
+            // Use HTTP POST with clean data
+            using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Add("apikey", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0");
+            httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0");
+
+            var timeData = new
             {
-                var created = response.Models.First();
-                await PopulateNavigationProperties(new List<TimeRegistration> { created });
-                
-                _logger.LogInformation($"✅ Time registration created in Supabase for user: {registration.UserId}");
-                return created;
+                user_id = registration.UserId,
+                team_id = registration.TeamId,
+                date = registration.Date.ToString("yyyy-MM-dd"),
+                check_in = registration.CheckIn?.ToString(@"hh\:mm"),
+                check_out = registration.CheckOut?.ToString(@"hh\:mm"),
+                total_hours = registration.TotalHours,
+                time_bank = registration.TimeBank,
+                status = registration.Status,
+                description = registration.Description
+            };
+
+            var json = System.Text.Json.JsonSerializer.Serialize(timeData);
+            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+            _logger.LogInformation($"Sending time registration data: {json}");
+
+            var response = await httpClient.PostAsync("http://127.0.0.1:54321/rest/v1/time_registrations", content);
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation($"✅ Time registration created in Supabase database");
+                return registration;
             }
             else
             {
-                throw new Exception("Failed to create time registration in Supabase");
+                _logger.LogError($"❌ Database error {response.StatusCode}: {responseContent}");
+                throw new Exception($"Database save failed: {response.StatusCode} - {responseContent}");
             }
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to create time registration in Supabase, adding to demo data");
-            
-            // Fallback to demo mode
-            registration.Id = Guid.NewGuid();
-            registration.CreatedAt = DateTime.UtcNow;
-            registration.UpdatedAt = DateTime.UtcNow;
-            
-            _demoRegistrations.Add(registration);
-            _logger.LogInformation($"✅ Time registration created in demo mode for user: {registration.UserId}");
-            return registration;
+            _logger.LogError(ex, $"❌ Failed to save time registration to database: {ex.Message}");
+            throw; // Don't fall back to demo mode
         }
     }
 

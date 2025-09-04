@@ -96,15 +96,18 @@ public class CaseService : ICaseService
 
             if (response?.Models != null && response.Models.Any())
             {
-                var cases = response.Models.ToList();
-                await PopulateNavigationProperties(cases);
+                var dbCases = response.Models.ToList();
+                await PopulateNavigationProperties(dbCases);
                 
-                _logger.LogInformation($"✅ Loaded {cases.Count} cases from Supabase");
-                return cases;
+                // Combine database cases with demo cases
+                var allCases = dbCases.Concat(_demoCases).ToList();
+                
+                _logger.LogInformation($"✅ Loaded {dbCases.Count} cases from Supabase + {_demoCases.Count} demo cases = {allCases.Count} total");
+                return allCases;
             }
             else
             {
-                _logger.LogWarning("No cases found in Supabase, using demo data");
+                _logger.LogWarning("No cases found in Supabase, using demo data only");
                 return _demoCases.ToList();
             }
         }
@@ -154,83 +157,46 @@ public class CaseService : ICaseService
     {
         try
         {
-            // Create a clean CaseModel without navigation properties for insert
-            var cleanCase = new CaseModel
-            {
-                CaseNumber = caseModel.CaseNumber,
-                Title = caseModel.Title,
-                Description = caseModel.Description,
-                TeamId = caseModel.TeamId,
-                CreatedBy = caseModel.CreatedBy,
-                AssignedTo = caseModel.AssignedTo,
-                CustomerId = caseModel.CustomerId,
-                Status = caseModel.Status,
-                Priority = caseModel.Priority,
-                StartDate = caseModel.StartDate,
-                EndDate = caseModel.EndDate,
-                EstimatedHours = caseModel.EstimatedHours,
-                CompletedHours = caseModel.CompletedHours,
-                GeofenceAddress = caseModel.GeofenceAddress,
-                GeofenceLatitude = caseModel.GeofenceLatitude,
-                GeofenceLongitude = caseModel.GeofenceLongitude,
-                GeofenceRadius = caseModel.GeofenceRadius
-                // Explicitly NOT including navigation properties
-            };
+            _logger.LogInformation($"Attempting to create case in Supabase: {caseModel.CaseNumber}");
 
-            // Use pure HTTP POST to avoid any serialization issues
+            // Use simple HTTP POST with only the required fields
             using var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Add("apikey", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0");
             httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0");
 
             var caseData = new
             {
-                case_number = cleanCase.CaseNumber,
-                title = cleanCase.Title,
-                description = cleanCase.Description,
-                team_id = cleanCase.TeamId,
-                created_by = cleanCase.CreatedBy,
-                assigned_to = cleanCase.AssignedTo,
-                customer_id = cleanCase.CustomerId,
-                status = cleanCase.Status,
-                priority = cleanCase.Priority,
-                start_date = cleanCase.StartDate?.ToString("yyyy-MM-dd"),
-                end_date = cleanCase.EndDate?.ToString("yyyy-MM-dd"),
-                estimated_hours = cleanCase.EstimatedHours,
-                completed_hours = cleanCase.CompletedHours,
-                geofence_address = cleanCase.GeofenceAddress,
-                geofence_latitude = cleanCase.GeofenceLatitude,
-                geofence_longitude = cleanCase.GeofenceLongitude,
-                geofence_radius = cleanCase.GeofenceRadius
+                case_number = caseModel.CaseNumber,
+                title = caseModel.Title ?? caseModel.CaseNumber,
+                description = caseModel.Description ?? "",
+                status = caseModel.Status ?? "Ny",
+                priority = caseModel.Priority ?? "Medium"
             };
 
-            var jsonContent = System.Text.Json.JsonSerializer.Serialize(caseData);
-            var content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
+            var json = System.Text.Json.JsonSerializer.Serialize(caseData);
+            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+            _logger.LogInformation($"Sending case data: {json}");
 
             var response = await httpClient.PostAsync("http://127.0.0.1:54321/rest/v1/cases", content);
+            var responseContent = await response.Content.ReadAsStringAsync();
 
             if (response.IsSuccessStatusCode)
             {
-                _logger.LogInformation($"✅ Case created in Supabase: {cleanCase.CaseNumber}");
-                return cleanCase; // Return the clean case since it worked
+                _logger.LogInformation($"✅ Case created in Supabase database: {caseModel.CaseNumber}");
+                _logger.LogInformation($"Response: {responseContent}");
+                return caseModel;
             }
             else
             {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                throw new Exception($"HTTP error: {response.StatusCode} - {errorContent}");
+                _logger.LogError($"❌ Database error {response.StatusCode}: {responseContent}");
+                throw new Exception($"Database save failed: {response.StatusCode} - {responseContent}");
             }
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to create case in Supabase, adding to demo data");
-            
-            // Fallback to demo mode
-            caseModel.Id = Guid.NewGuid();
-            caseModel.CreatedAt = DateTime.UtcNow;
-            caseModel.UpdatedAt = DateTime.UtcNow;
-            
-            _demoCases.Add(caseModel);
-            _logger.LogInformation($"✅ Case created in demo mode: {caseModel.CaseNumber}");
-            return caseModel;
+            _logger.LogError(ex, $"❌ Failed to save case to database: {ex.Message}");
+            throw; // Don't fall back to demo mode - we want to see the actual error
         }
     }
 
