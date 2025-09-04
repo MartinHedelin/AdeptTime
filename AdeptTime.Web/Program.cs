@@ -32,6 +32,7 @@ builder.Services.AddScoped<ISaegsService, SaegsService>();
 // Add team services
 builder.Services.AddScoped<ITeamService, TeamService>();
 builder.Services.AddScoped<ITimeRegistrationService, TimeRegistrationService>();
+builder.Services.AddScoped<ICaseService, CaseService>();
 
 // Add team selection service
 builder.Services.AddSingleton<TeamSelectionService>();

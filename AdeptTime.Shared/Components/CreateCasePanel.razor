@@ -719,4 +719,34 @@
         await OnCaseCreated.InvokeAsync(addedCase);
         await ClosePanel();
     }
+
+    private async Task UpdateMapLocation(ChangeEventArgs e)
+    {
+        geofenceAddress = e.Value?.ToString() ?? "";
+        Console.WriteLine($"[CreateCase] Geofence address updated: {geofenceAddress}");
+        
+        // In a real app, you would geocode the address here
+        // For demo, just update the display
+        StateHasChanged();
+    }
+
+    private void IncreaseRadius()
+    {
+        if (geofenceRadius < 500)
+        {
+            geofenceRadius += 25;
+            Console.WriteLine($"[CreateCase] Geofence radius increased to: {geofenceRadius}m");
+            StateHasChanged();
+        }
+    }
+
+    private void DecreaseRadius()
+    {
+        if (geofenceRadius > 25)
+        {
+            geofenceRadius -= 25;
+            Console.WriteLine($"[CreateCase] Geofence radius decreased to: {geofenceRadius}m");
+            StateHasChanged();
+        }
+    }
 } 

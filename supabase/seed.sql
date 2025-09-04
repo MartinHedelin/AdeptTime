@@ -63,4 +63,12 @@ BEGIN
     (admin_user_id, team_berlin_id, '2024-01-26', '08:00', '17:30', 9.50, 1.50, 'Afventer', 'Cross-team collaboration'),
     (worker_user_id, team_berlin_id, '2024-01-26', '08:30', '17:00', 8.50, 0.50, 'Afventer', 'Remote work from Berlin office');
     
+    -- Insert dummy cases data
+    INSERT INTO public.cases (case_number, title, description, team_id, created_by, assigned_to, customer_id, status, priority, start_date, end_date, estimated_hours, completed_hours, geofence_address, geofence_latitude, geofence_longitude, geofence_radius) VALUES
+    ('SAG-2024-0001', 'VVS Installation', 'Installation af nyt VVS system i køkken og bad', team_london_id, admin_user_id, worker_user_id, 1, 'I gang', 'Høj', '2024-01-22', '2024-01-25', 32, 16, 'Vesterbro 36, 2300 København S', 55.6761, 12.5683, 150),
+    ('SAG-2024-0002', 'Elektrisk Vedligeholdelse', 'Rutine tjek af elektriske installationer', team_dublin_id, admin_user_id, john_user_id, 2, 'Ny', 'Medium', '2024-01-25', '2024-01-27', 16, 0, 'Nørrebro 12, 2200 København N', 55.6867, 12.5700, 100),
+    ('SAG-2024-0003', 'Byggeprojekt Konsultation', 'Konsultation vedrørende nyt byggeprojekt', team_copenhagen_id, admin_user_id, null, 3, 'Afventer', 'Medium', '2024-01-28', '2024-02-01', 24, 0, 'Østerbro 45, 2100 København Ø', 55.7058, 12.5691, 200),
+    ('SAG-2024-0004', 'Akut VVS Reparation', 'Akut reparation af vandrør i kælder', team_london_id, worker_user_id, worker_user_id, 1, 'Færdig', 'Kritisk', '2024-01-20', '2024-01-21', 8, 8, 'Amager Boulevard 70, 2300 København S', 55.6586, 12.5912, 75),
+    ('SAG-2024-0005', 'Preventiv Vedligeholdelse', 'Årlig vedligeholdelse af ventilationssystem', team_berlin_id, admin_user_id, john_user_id, 2, 'I gang', 'Lav', '2024-01-26', '2024-01-30', 40, 12, 'Frederiksberg Allé 15, 1820 Frederiksberg', 55.6736, 12.5348, 125);
+    
 END $$;
