@@ -28,6 +28,9 @@ public class User : BaseModel
     [Column("address")]
     public string? Address { get; set; }
 
+    [Column("avatar_url")]
+    public string? AvatarUrl { get; set; }
+
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

@@ -381,6 +381,7 @@
             var createdUser = await UserService.CreateUserAsync(newUser);
             
             // Auto-login the user after successful signup
+            Console.WriteLine($"[Signup] Created user - Email: {createdUser.Email}, UserTypeId: {createdUser.UserTypeId}, IsAdmin: {createdUser.IsAdmin}");
             UserRoleService.SetCurrentUser(createdUser.Email, createdUser.IsAdmin);
             await AuthService.LoginAsync(createdUser.Email, signupModel.Password);
             NavigationManager.NavigateTo("/", false);

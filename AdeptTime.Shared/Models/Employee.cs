@@ -7,4 +7,5 @@ public class Employee
     public string Team { get; set; } = string.Empty;
     public string AvatarUrl { get; set; } = string.Empty;
     public string Position { get; set; } = string.Empty;
+    public string UserType { get; set; } = "Worker";
 } 

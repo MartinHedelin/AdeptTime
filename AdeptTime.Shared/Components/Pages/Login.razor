@@ -258,6 +258,7 @@
                 if (isValid)
                 {
                     // Set user role based on database or demo user value
+                    Console.WriteLine($"[Login] User found - Email: {user.Email}, UserTypeId: {user.UserTypeId}, IsAdmin: {user.IsAdmin}");
                     UserRoleService.SetCurrentUser(loginModel.Email, user.IsAdmin);
 
                     // Mark session authenticated so AuthRedirect allows access

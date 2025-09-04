@@ -75,16 +75,25 @@
         try
         {
             var email = await AuthService.GetCurrentUserEmailAsync();
+            Console.WriteLine($"[AuthRedirect] Rehydrating role for email: {email}");
             if (!string.IsNullOrWhiteSpace(email))
             {
                 var user = await UserService.GetUserByEmailAsync(email);
                 if (user != null)
                 {
+                    Console.WriteLine($"[AuthRedirect] User found - Email: {user.Email}, UserTypeId: {user.UserTypeId}, IsAdmin: {user.IsAdmin}");
                     UserRoleService.SetCurrentUser(email, user.IsAdmin);
+                }
+                else
+                {
+                    Console.WriteLine($"[AuthRedirect] No user found for email: {email}");
                 }
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[AuthRedirect] Failed to rehydrate user role: {ex.Message}");
+        }
     }
 }
 

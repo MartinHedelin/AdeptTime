@@ -3,6 +3,8 @@
 @using AdeptTime.Shared.Components
 @using AdeptTime.Shared.Services
 @inject TeamSelectionService TeamService
+@inject ITeamService TeamDataService
+@inject ITimeRegistrationService TimeRegistrationService
 @inject NavigationManager Navigation
 @inject UserRoleService UserRoleService
 
@@ -26,6 +28,15 @@
     <!-- Secondary Filter Bar -->
     <div class="filter-bar">
         <div class="filter-left">
+            <div class="filter-group">
+                <select class="filter-select" @bind="selectedTeamId" @bind:event="onchange">
+                    <option value="">All Teams</option>
+                    @foreach (var team in availableTeams)
+                    {
+                        <option value="@team.Id">@team.Name</option>
+                    }
+                </select>
+            </div>
             <div class="filter-group">
                 <select class="filter-select status-picker @GetTopFilterStatusClass()" @bind="selectedStatus">
                     <option value="">Status</option>
@@ -82,7 +93,7 @@
     <!-- Main Content Container -->
     <div class="content-container @(isCreatePanelVisible ? "panel-open" : "")">
         <!-- Time Entry Table -->
-        <TimeEntryTable @ref="timeEntryTable" TimeEntries="FilteredTimeEntries" OnStatusChanged="HandleStatusChanged" />
+        <TimeEntryTable @ref="timeEntryTable" TimeEntries="ConvertedTimeEntries" OnStatusChanged="HandleStatusChanged" />
     </div>
 
     <!-- Create Case Panel -->
@@ -336,32 +347,50 @@
     private TimeEntryTable? timeEntryTable;
     private string? bulkStatus = "Afventer";
     private string selectedStatus = "";
+    private string _selectedTeamId = "";
+    private string selectedTeamId 
+    { 
+        get => _selectedTeamId; 
+        set 
+        { 
+            _selectedTeamId = value;
+            _ = OnTeamFilterChangedAsync(value);
+        } 
+    }
     private string selectedWeek = "42";
-    private DateTime fromDate = new DateTime(2022, 1, 22);
-    private DateTime toDate = new DateTime(2022, 1, 28);
+    private DateTime fromDate = new DateTime(2024, 1, 22);
+    private DateTime toDate = new DateTime(2024, 1, 28);
     private string pendingFilter = "";
     private bool isCreatePanelVisible = false;
     private bool isEmployeeInvitePanelVisible = false;
     private bool isAddHoursPanelVisible = false;
     private bool showDatePicker = false;
     private string dateRangeText = "";
+    private bool isLoading = true;
 
-    private List<TimeEntry> timeEntries = new();
+    private List<TimeRegistration> timeRegistrations = new();
+    private List<Team> availableTeams = new();
     private List<Employee> employees = new();
     private List<Customer> customers = new();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         InitializeCustomers();
         InitializeEmployees();
-        InitializeTimeEntries();
+        
+        // Load real data from Supabase
+        await LoadTeamsAsync();
+        await LoadTimeRegistrationsAsync();
+        
         UpdateDateRange();
+        isLoading = false;
         
         // Subscribe to team changes
         TeamService.OnTeamChanged += HandleTeamSelectionChanged;
         
         // Debug: Log current user role status
         Console.WriteLine($"[Timeoversigt] Page loaded - User: {UserRoleService.CurrentUserEmail}, IsAdmin: {UserRoleService.IsAdministrator}");
+        Console.WriteLine($"[Timeoversigt] Loaded {availableTeams.Count} teams and {timeRegistrations.Count} time registrations");
     }
 
     private void HandleTeamSelectionChanged(string selectedTeam)
@@ -416,205 +445,99 @@
         };
     }
 
-    private void InitializeTimeEntries()
-    {
-        var approver = employees.First(); // James Carter as the approver
 
-        timeEntries = new List<TimeEntry>
+    private async Task LoadTeamsAsync()
+    {
+        try
         {
-            // James Carter - Multiple entries (to demonstrate expansion)
-            new TimeEntry
-            {
-                Id = 1,
-                Employee = employees[0], // James Carter
-                Date = new DateTime(2022, 1, 22),
-                CheckIn = new TimeSpan(8, 0, 0),
-                CheckOut = new TimeSpan(17, 15, 0),
-                TotalHours = new TimeSpan(9, 15, 0),
-                TimeBank = new TimeSpan(1, 15, 0),
-                Status = TimeEntryStatus.Afventer
-            },
-            new TimeEntry
-            {
-                Id = 12,
-                Employee = employees[0], // James Carter - 2nd entry
-                Date = new DateTime(2022, 1, 23),
-                CheckIn = new TimeSpan(8, 0, 0),
-                CheckOut = new TimeSpan(17, 15, 0),
-                TotalHours = new TimeSpan(9, 15, 0),
-                TimeBank = new TimeSpan(1, 15, 0),
-                Status = TimeEntryStatus.Afventer
-            },
-            new TimeEntry
-            {
-                Id = 13,
-                Employee = employees[0], // James Carter - 3rd entry
-                Date = new DateTime(2022, 1, 24),
-                CheckIn = new TimeSpan(8, 0, 0),
-                CheckOut = new TimeSpan(17, 15, 0),
-                TotalHours = new TimeSpan(9, 15, 0),
-                TimeBank = new TimeSpan(1, 15, 0),
-                Status = TimeEntryStatus.Afventer
-            },
-            new TimeEntry
-            {
-                Id = 14,
-                Employee = employees[0], // James Carter - 4th entry
-                Date = new DateTime(2022, 1, 25),
-                CheckIn = new TimeSpan(8, 0, 0),
-                CheckOut = new TimeSpan(17, 15, 0),
-                TotalHours = new TimeSpan(9, 15, 0),
-                TimeBank = new TimeSpan(1, 15, 0),
-                Status = TimeEntryStatus.Afventer
-            },
-            
-            // Liam Anders - Single entry with Afvist status
-            new TimeEntry
-            {
-                Id = 2,
-                Employee = employees[1], // Liam Anders
-                Date = new DateTime(2022, 1, 22),
-                CheckIn = new TimeSpan(8, 0, 0),
-                CheckOut = new TimeSpan(17, 0, 0),
-                TotalHours = new TimeSpan(9, 0, 0),
-                TimeBank = new TimeSpan(3, 0, 0),
-                Status = TimeEntryStatus.Afvist
-            },
-            
-            // Noah Bennett - Single entry with Godkendt status and negative timebank
-            new TimeEntry
-            {
-                Id = 3,
-                Employee = employees[2], // Noah Bennett
-                Date = new DateTime(2022, 1, 22),
-                CheckIn = new TimeSpan(8, 0, 0),
-                CheckOut = new TimeSpan(17, 0, 0),
-                TotalHours = new TimeSpan(9, 0, 0),
-                TimeBank = new TimeSpan(-1, -15, 0),
-                Status = TimeEntryStatus.Godkendt,
-                ApprovedBy = approver
-            },
-            
-            // Ethan Clark - Single entry with Godkendt status
-            new TimeEntry
-            {
-                Id = 4,
-                Employee = employees[3], // Ethan Clark
-                Date = new DateTime(2022, 1, 22),
-                CheckIn = new TimeSpan(8, 0, 0),
-                CheckOut = new TimeSpan(17, 0, 0),
-                TotalHours = new TimeSpan(9, 0, 0),
-                TimeBank = new TimeSpan(0, 0, 0),
-                Status = TimeEntryStatus.Godkendt,
-                ApprovedBy = approver
-            },
-            
-            // Oliver Hayes - Single entry with Godkendt status
-            new TimeEntry
-            {
-                Id = 5,
-                Employee = employees[4], // Oliver Hayes
-                Date = new DateTime(2022, 1, 22),
-                CheckIn = new TimeSpan(8, 0, 0),
-                CheckOut = new TimeSpan(17, 0, 0),
-                TotalHours = new TimeSpan(9, 0, 0),
-                TimeBank = new TimeSpan(0, 0, 0),
-                Status = TimeEntryStatus.Godkendt,
-                ApprovedBy = approver
-            },
-            
-            // Lucas Reid - Single entry with Godkendt status and negative timebank
-            new TimeEntry
-            {
-                Id = 6,
-                Employee = employees[5], // Lucas Reid
-                Date = new DateTime(2022, 1, 22),
-                CheckIn = new TimeSpan(8, 0, 0),
-                CheckOut = new TimeSpan(17, 0, 0),
-                TotalHours = new TimeSpan(9, 0, 0),
-                TimeBank = new TimeSpan(-1, -15, 0),
-                Status = TimeEntryStatus.Godkendt,
-                ApprovedBy = approver
-            },
-            
-            // Mason Turner - Single entry with Godkendt status
-            new TimeEntry
-            {
-                Id = 7,
-                Employee = employees[6], // Mason Turner
-                Date = new DateTime(2022, 1, 22),
-                CheckIn = new TimeSpan(8, 0, 0),
-                CheckOut = new TimeSpan(17, 0, 0),
-                TotalHours = new TimeSpan(9, 0, 0),
-                TimeBank = new TimeSpan(0, 0, 0),
-                Status = TimeEntryStatus.Godkendt,
-                ApprovedBy = approver
-            },
-            
-            // Henry Collins - Single entry with Afvist status
-            new TimeEntry
-            {
-                Id = 8,
-                Employee = employees[7], // Henry Collins
-                Date = new DateTime(2022, 1, 22),
-                CheckIn = new TimeSpan(8, 0, 0),
-                CheckOut = new TimeSpan(17, 0, 0),
-                TotalHours = new TimeSpan(9, 0, 0),
-                TimeBank = new TimeSpan(0, 0, 0),
-                Status = TimeEntryStatus.Afvist
-            },
-            
-            // Aiden Brooks - Single entry with Afvist status
-            new TimeEntry
-            {
-                Id = 9,
-                Employee = employees[8], // Aiden Brooks
-                Date = new DateTime(2022, 1, 22),
-                CheckIn = new TimeSpan(8, 0, 0),
-                CheckOut = new TimeSpan(17, 0, 0),
-                TotalHours = new TimeSpan(9, 0, 0),
-                TimeBank = new TimeSpan(0, 0, 0),
-                Status = TimeEntryStatus.Afvist
-            }
-        };
+            availableTeams = await TeamDataService.GetAllTeamsAsync();
+            Console.WriteLine($"[Timeoversigt] Loaded {availableTeams.Count} teams from service");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Timeoversigt] Failed to load teams: {ex.Message}");
+            availableTeams = new List<Team>();
+        }
     }
 
-    private List<TimeEntry> FilteredTimeEntries
+    private async Task LoadTimeRegistrationsAsync()
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(selectedTeamId) && Guid.TryParse(selectedTeamId, out var teamId))
+            {
+                // Load by specific team
+                timeRegistrations = await TimeRegistrationService.GetTimeRegistrationsByTeamAsync(teamId);
+                Console.WriteLine($"[Timeoversigt] Loaded {timeRegistrations.Count} time registrations for team {teamId}");
+            }
+            else
+            {
+                // Load all registrations
+                timeRegistrations = await TimeRegistrationService.GetTimeRegistrationsByDateRangeAsync(fromDate, toDate);
+                Console.WriteLine($"[Timeoversigt] Loaded {timeRegistrations.Count} time registrations (all teams)");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Timeoversigt] Failed to load time registrations: {ex.Message}");
+            timeRegistrations = new List<TimeRegistration>();
+        }
+    }
+
+    private List<TimeRegistration> FilteredTimeRegistrations
     {
         get
         {
-            var filtered = timeEntries.AsEnumerable();
+            var filtered = timeRegistrations.AsEnumerable();
 
             // Filter by date range
             filtered = filtered.Where(t => t.Date >= fromDate && t.Date <= toDate);
 
-            // Filter by team/department
-            if (!TeamService.IsAllTeamsSelected())
+            // Filter by team
+            if (!string.IsNullOrEmpty(selectedTeamId) && Guid.TryParse(selectedTeamId, out var teamId))
             {
-                filtered = filtered.Where(t => t.Employee.Team == TeamService.SelectedTeam);
+                filtered = filtered.Where(t => t.TeamId == teamId);
             }
 
             // Filter by status
-            if (!string.IsNullOrEmpty(selectedStatus) && Enum.TryParse<TimeEntryStatus>(selectedStatus, out var status))
+            if (!string.IsNullOrEmpty(selectedStatus))
             {
-                filtered = filtered.Where(t => t.Status == status);
-            }
-
-            // Filter by pending status if specified
-            if (!string.IsNullOrEmpty(pendingFilter))
-            {
-                if (pendingFilter == "all")
-                {
-                    // Show all entries - no additional filtering
-                }
-                else
-                {
-                    // Default behavior - show only pending entries
-                    filtered = filtered.Where(t => t.Status == TimeEntryStatus.Afventer);
-                }
+                filtered = filtered.Where(t => t.Status == selectedStatus);
             }
 
             return filtered.ToList();
+        }
+    }
+
+    private List<TimeEntry> ConvertedTimeEntries
+    {
+        get
+        {
+            // Convert TimeRegistration to TimeEntry for compatibility with existing TimeEntryTable
+            return FilteredTimeRegistrations.Select(tr => new TimeEntry
+            {
+                Id = (int)tr.Id.GetHashCode(), // Convert Guid to int for compatibility
+                Employee = new Employee 
+                { 
+                    Id = (int)tr.UserId.GetHashCode(),
+                    Name = tr.User?.Name ?? "Unknown User",
+                    Team = tr.Team?.Name ?? "Unknown Team",
+                    AvatarUrl = tr.User?.AvatarUrl ?? "https://plus.unsplash.com/premium_photo-1671656349322-41de944d259b?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8cG9ydHJhaXR8ZW58MHx8MHx8fDA%3D",
+                    UserType = tr.User?.UserTypeId == 1 ? "Administrator" : "Worker"
+                },
+                Date = tr.Date,
+                CheckIn = tr.CheckIn ?? TimeSpan.Zero,
+                CheckOut = tr.CheckOut ?? TimeSpan.Zero,
+                TotalHours = tr.TotalHoursTimeSpan,
+                TimeBank = tr.TimeBankTimeSpan,
+                Status = tr.TimeEntryStatus,
+                Description = tr.Description,
+                ApprovedBy = tr.ApprovedByUser != null ? new Employee 
+                { 
+                    Id = (int)tr.ApprovedByUser.Id.GetHashCode(),
+                    Name = tr.ApprovedByUser.Name 
+                } : null
+            }).ToList();
         }
     }
 
@@ -688,29 +611,33 @@
 
     private void HandleHoursSubmitted(List<AddHoursPanel.TimeEntryData> hoursData)
     {
-        // Convert AddHoursPanel.TimeEntryData to TimeEntry objects and add to timeEntries
-        // For demo purposes, we'll use the current user (first employee) as the submitter
-        var currentEmployee = employees.FirstOrDefault() ?? new Employee { Id = 999, Name = "Current User", Team = "Unknown" };
+        // Convert AddHoursPanel.TimeEntryData to TimeRegistration objects and add to timeRegistrations
+        // For demo purposes, we'll use the current user as the submitter
+        var currentUserId = Guid.NewGuid(); // In real app, get from UserRoleService
+        var defaultTeamId = availableTeams.FirstOrDefault()?.Id;
         
         foreach (var entry in hoursData)
         {
-            var newTimeEntry = new TimeEntry
+            var newTimeRegistration = new TimeRegistration
             {
-                Id = Random.Shared.Next(10000, 99999),
-                Employee = currentEmployee,
+                Id = Guid.NewGuid(),
+                UserId = currentUserId,
+                TeamId = defaultTeamId,
                 Date = entry.Date,
                 CheckIn = new TimeSpan(8, 0, 0), // Default check-in time
                 CheckOut = new TimeSpan(8, 0, 0).Add(TimeSpan.FromHours((double)entry.TotalHours)), // Calculate check-out
-                TotalHours = TimeSpan.FromHours((double)entry.TotalHours),
-                TimeBank = TimeSpan.Zero, // Will be calculated later
-                Status = TimeEntryStatus.Afventer, // New entries are pending
-                Description = entry.Description
+                TotalHours = entry.TotalHours,
+                TimeBank = 0, // Will be calculated later
+                Status = "Afventer", // New entries are pending
+                Description = entry.Description,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
             
-            timeEntries.Add(newTimeEntry);
+            timeRegistrations.Add(newTimeRegistration);
         }
         
-        Console.WriteLine($"Added {hoursData.Count} time entries for user: {currentEmployee.Name}");
+        Console.WriteLine($"Added {hoursData.Count} time registrations");
         StateHasChanged();
     }
 
@@ -751,6 +678,15 @@
             "Afvist" => "rejected",
             _ => ""
         };
+    }
+
+    private async Task OnTeamFilterChangedAsync(string teamId)
+    {
+        Console.WriteLine($"[Timeoversigt] Team filter changed to: {teamId}");
+        
+        // Reload time registrations when team filter changes
+        await LoadTimeRegistrationsAsync();
+        StateHasChanged();
     }
 
     private void LogCurrentStatus()

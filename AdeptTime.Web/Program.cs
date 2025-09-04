@@ -29,6 +29,10 @@ builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 // Add saegs service
 builder.Services.AddScoped<ISaegsService, SaegsService>();
 
+// Add team services
+builder.Services.AddScoped<ITeamService, TeamService>();
+builder.Services.AddScoped<ITimeRegistrationService, TimeRegistrationService>();
+
 // Add team selection service
 builder.Services.AddSingleton<TeamSelectionService>();
 

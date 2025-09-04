@@ -1,11 +1,3 @@
--- Simple seed data for development/testing
--- Easy to understand test users with proper password hashes
-
-INSERT INTO public.users (email, password_hash, user_type_id, name, phone_number, address, avatar_url) VALUES
-('admin@test.com', 'ZjVjOGQ4OWE4YzhjZDFlYjMwMmQxNzE4YTc3YTZhOTc1NzA2NjY0NDQyNDk1NzMyNzY0MzE5YmNkODNlMGM4Nw==', 1, 'Admin User', '+1234567890', '123 Admin Street', 'https://plus.unsplash.com/premium_photo-1671656349322-41de944d259b?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8cG9ydHJhaXR8ZW58MHx8MHx8fDA%3D'),
-('worker@test.com', 'ZjVjOGQ4OWE4YzhjZDFlYjMwMmQxNzE4YTc3YTZhOTc1NzA2NjY0NDQyNDk1NzMyNzY0MzE5YmNkODNlMGM4Nw==', 0, 'Worker User', '+1234567891', '456 Worker Ave', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'),
-('john@test.com', 'ZjVjOGQ4OWE4YzhjZDFlYjMwMmQxNzE4YTc3YTZhOTc1NzA2NjY0NDQyNDk1NzMyNzY0MzE5YmNkODNlMGM4Nw==', 0, 'John Doe', '+1234567892', '789 John Street', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=764&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHhwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
-
 -- Insert dummy teams data
 INSERT INTO public.teams (name, description, color) VALUES
 ('All Teams', 'All team members', '#6c757d'),
@@ -15,7 +7,7 @@ INSERT INTO public.teams (name, description, color) VALUES
 ('Team Berlin', 'Berlin office team', '#ffc107'),
 ('Team Stockholm', 'Stockholm office team', '#17a2b8');
 
--- Insert time registrations with proper relationships
+-- Get team IDs for reference
 DO $$
 DECLARE
     team_london_id UUID;
@@ -48,8 +40,8 @@ BEGIN
     -- Worker user (Team Dublin) - Multiple entries  
     INSERT INTO public.time_registrations (user_id, team_id, date, check_in, check_out, total_hours, time_bank, status, description, approved_by) VALUES
     (worker_user_id, team_dublin_id, '2024-01-22', '08:00', '17:00', 9.00, 1.00, 'Godkendt', 'Client support and bug fixes', admin_user_id),
-    (worker_user_id, team_dublin_id, '2024-01-23', '08:15', '17:15', 9.00, 1.00, 'Afventer', 'Feature development', null),
-    (worker_user_id, team_dublin_id, '2024-01-24', '08:00', '16:30', 8.50, 0.50, 'Afvist', 'Short day - doctor appointment', null);
+    (worker_user_id, team_dublin_id, '2024-01-23', '08:15', '17:15', 9.00, 1.00, 'Afventer', 'Feature development'),
+    (worker_user_id, team_dublin_id, '2024-01-24', '08:00', '16:30', 8.50, 0.50, 'Afvist', 'Short day - doctor appointment');
     
     -- John user (Team Copenhagen) - Multiple entries
     INSERT INTO public.time_registrations (user_id, team_id, date, check_in, check_out, total_hours, time_bank, status, description) VALUES

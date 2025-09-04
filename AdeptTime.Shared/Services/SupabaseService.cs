@@ -68,4 +68,13 @@ public class SupabaseService : ISupabaseService
             return false;
         }
     }
+
+    public async Task<Client> GetClientAsync()
+    {
+        if (_client == null)
+        {
+            await InitializeAsync();
+        }
+        return _client ?? throw new InvalidOperationException("Supabase client not initialized");
+    }
 }

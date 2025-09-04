@@ -87,42 +87,6 @@ public class UserService : IUserService
         return _demoUsers.FirstOrDefault(u => u.Email.Equals(email, StringComparison.OrdinalIgnoreCase));
     }
 
-    public async Task<User?> GetUserByIdAsync(Guid id)
-    {
-        try
-        {
-            // Use direct HTTP client to avoid Supabase client issues
-            using var httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Add("apikey", _settings.Key);
-            httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {_settings.Key}");
-
-            var response = await httpClient.GetAsync($"{_settings.Url}/rest/v1/users?id=eq.{id}");
-
-            if (response.IsSuccessStatusCode)
-            {
-                var responseJson = await response.Content.ReadAsStringAsync();
-                var users = System.Text.Json.JsonSerializer.Deserialize<List<User>>(responseJson, new System.Text.Json.JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-
-                return users?.FirstOrDefault();
-            }
-            else if (response.StatusCode == HttpStatusCode.NotFound)
-            {
-                return null;
-            }
-            else
-            {
-                throw new Exception($"HTTP error: {response.StatusCode}");
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting user by ID: {Id}", id);
-            return null;
-        }
-    }
 
     public async Task<List<User>> GetAllUsersAsync()
     {
@@ -157,6 +121,31 @@ public class UserService : IUserService
             _logger.LogError(ex, "Error getting all users");
             }
             return new List<User>();
+        }
+    }
+
+    public async Task<User?> GetUserByIdAsync(Guid userId)
+    {
+        // Check demo users first
+        var demoUser = _demoUsers.FirstOrDefault(u => u.Id == userId);
+        if (demoUser != null)
+        {
+            return demoUser;
+        }
+
+        try
+        {
+            var client = await _supabaseService.GetClientAsync();
+            var response = await client.From<User>()
+                .Where(u => u.Id == userId)
+                .Single();
+
+            return response;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to fetch user by ID from Supabase: {UserId}", userId);
+            return null;
         }
     }
 

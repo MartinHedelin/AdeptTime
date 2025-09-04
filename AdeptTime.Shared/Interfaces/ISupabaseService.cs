@@ -7,4 +7,5 @@ public interface ISupabaseService
     Client Client { get; }
     Task InitializeAsync();
     Task<bool> IsConnectedAsync();
+    Task<Client> GetClientAsync();
 }

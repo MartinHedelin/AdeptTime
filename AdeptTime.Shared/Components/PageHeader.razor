@@ -33,8 +33,6 @@
                         @{
                             Console.WriteLine($"[PageHeader] Rendering dropdown - IsAdministrator: {UserRoleService.IsAdministrator}");
                         }
-                        @if (UserRoleService.IsAdministrator)
-                        {
                             <!-- Administrator options -->
                             <button class="dropdown-item" @onclick="() => HandleCreateOption(CreateType.Case)">
                                 <i class="fas fa-briefcase"></i>
@@ -48,15 +46,6 @@
                                 <i class="fas fa-map-marker-alt"></i>
                                 Geofence
                             </button>
-                        }
-                        else
-                        {
-                            <!-- Employee options -->
-                            <button class="dropdown-item" @onclick="() => HandleCreateOption(CreateType.AddHours)">
-                                <i class="fas fa-clock"></i>
-                                Tilføj timer
-                            </button>
-                        }
                     </div>
                 }
             </div>
