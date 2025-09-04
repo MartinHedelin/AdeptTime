@@ -1,6 +1,9 @@
 @using AdeptTime.Shared.Interfaces
+@using AdeptTime.Shared.Services
 @inject IAuthenticationService AuthService
 @inject NavigationManager NavigationManager
+@inject IUserService UserService
+@inject UserRoleService UserRoleService
 
 @code {
     [Parameter] public RenderFragment? ChildContent { get; set; }
@@ -14,6 +17,11 @@
         _isAuthenticated = await AuthService.IsAuthenticatedAsync();
         _isLoading = false;
 
+        if (_isAuthenticated)
+        {
+            await EnsureRoleLoadedAsync();
+        }
+
         // Subscribe to auth state changes
         AuthService.OnAuthenticationStateChanged += OnAuthStateChanged;
 
@@ -25,6 +33,10 @@
     {
         _isAuthenticated = await AuthService.IsAuthenticatedAsync();
         InvokeAsync(StateHasChanged);
+        if (_isAuthenticated)
+        {
+            await EnsureRoleLoadedAsync();
+        }
         await HandleAuthRedirect();
     }
 
@@ -47,7 +59,8 @@
             // User is authenticated but trying to access auth pages - redirect to dashboard
             if (currentPath == "login" || currentPath == "signup")
             {
-                NavigationManager.NavigateTo("/", true);
+                // Use SPA navigation to preserve in-memory role state
+                NavigationManager.NavigateTo("/", false);
             }
         }
     }
@@ -55,6 +68,23 @@
     public void Dispose()
     {
         AuthService.OnAuthenticationStateChanged -= OnAuthStateChanged;
+    }
+
+    private async Task EnsureRoleLoadedAsync()
+    {
+        try
+        {
+            var email = await AuthService.GetCurrentUserEmailAsync();
+            if (!string.IsNullOrWhiteSpace(email))
+            {
+                var user = await UserService.GetUserByEmailAsync(email);
+                if (user != null)
+                {
+                    UserRoleService.SetCurrentUser(email, user.IsAdmin);
+                }
+            }
+        }
+        catch { }
     }
 }
 
