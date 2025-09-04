@@ -4,6 +4,7 @@
 @using AdeptTime.Shared.Services
 @inject NavigationManager NavigationManager
 @inject IUserService UserService
+@inject IAuthenticationService AuthService
 @inject UserRoleService UserRoleService
 @layout AuthLayout
 
@@ -256,8 +257,11 @@
 
                 if (isValid)
                 {
-                    // Set user role based on database value
+                    // Set user role based on database or demo user value
                     UserRoleService.SetCurrentUser(loginModel.Email, user.IsAdmin);
+
+                    // Mark session authenticated so AuthRedirect allows access
+                    await AuthService.LoginAsync(loginModel.Email, loginModel.Password);
 
                     // Redirect without forcing full reload to preserve in-memory role state
                     NavigationManager.NavigateTo("/", false);
@@ -271,16 +275,16 @@
             {
                 if (ex.Message.Contains("Failed to fetch") || ex.Message.Contains("ERR_CONNECTION_REFUSED"))
                 {
-                    // Demo mode - simulate login for specific test accounts
-                    if ((loginModel.Email == "admin_user@test.com" && loginModel.Password == "Test12345678") ||
-                        (loginModel.Email.EndsWith("@admin.com") && loginModel.Password == "Test12345678"))
+                    // Demo mode: re-check in-memory store using the normal code path
+                    var demoUser = await UserService.GetUserByEmailAsync(loginModel.Email);
+                    if (demoUser != null && await UserService.ValidatePasswordAsync(loginModel.Email, loginModel.Password))
                     {
-                        UserRoleService.SetCurrentUser(loginModel.Email, loginModel.Email.Contains("admin"));
+                        UserRoleService.SetCurrentUser(loginModel.Email, demoUser.IsAdmin);
                         NavigationManager.NavigateTo("/", false);
                     }
                     else
                     {
-                        errorMessage = "Demo mode: Use admin_user@test.com or any *@admin.com with password Test12345678";
+                        errorMessage = "Invalid email or password";
                     }
                 }
                 else

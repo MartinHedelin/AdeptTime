@@ -1,8 +1,11 @@
 @page "/signup"
 @using AdeptTime.Shared.ViewModels
 @using AdeptTime.Shared.Interfaces
+@using AdeptTime.Shared.Services
 @inject NavigationManager NavigationManager
 @inject IUserService UserService
+@inject UserRoleService UserRoleService
+@inject IAuthenticationService AuthService
 @layout AuthLayout
 
 <PageTitle>Sign Up</PageTitle>
@@ -346,25 +349,14 @@
                 return;
             }
 
-            // Check if Supabase is available
+            // Check if Supabase is available (non-blocking in demo mode)
             try
             {
-                var testConnection = await UserService.GetAllUsersAsync();
+                var _ = await UserService.GetAllUsersAsync();
             }
-            catch (Exception ex)
+            catch
             {
-                if (ex.Message.Contains("Failed to fetch") || ex.Message.Contains("ERR_CONNECTION_REFUSED"))
-                {
-                    errorMessage = "⚠️ Database not available. For demo purposes, signup will be simulated. Please start Supabase locally for full functionality.";
-                    successMessage = "Account created successfully (simulated)!";
-                    // Don't auto-navigate so you can see debug logs
-                    return;
-                }
-                else
-                {
-                    errorMessage = $"Database error: {ex.Message}";
-                    return;
-                }
+                // In demo mode, continue with in-memory creation without returning
             }
 
             // Check if user already exists
@@ -388,9 +380,10 @@
 
             var createdUser = await UserService.CreateUserAsync(newUser);
             
-            successMessage = "Account created successfully! Check terminal for debug logs. You can manually navigate to home page.";
-            
-            // Don't auto-navigate so you can see debug logs in terminal
+            // Auto-login the user after successful signup
+            UserRoleService.SetCurrentUser(createdUser.Email, createdUser.IsAdmin);
+            await AuthService.LoginAsync(createdUser.Email, signupModel.Password);
+            NavigationManager.NavigateTo("/", false);
         }
         catch (Exception)
         {
