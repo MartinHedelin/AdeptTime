@@ -70,6 +70,14 @@ FOR UPDATE USING (
 CREATE POLICY "Authenticated users can read user types" ON public.user_types
 FOR SELECT USING (auth.role() = 'authenticated');
 
+-- Allow INSERT for new user registration (anyone can create an account)
+CREATE POLICY "Allow user registration" ON public.users
+FOR INSERT WITH CHECK (true);
+
+-- Allow anonymous/service role to read users (for login validation)
+CREATE POLICY "Service role can read users" ON public.users
+FOR SELECT USING (auth.role() = 'service_role' OR auth.role() = 'anon');
+
 -- Create function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$

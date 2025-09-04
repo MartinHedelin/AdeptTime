@@ -41,7 +41,7 @@ public class SupabaseService : ISupabaseService
 
                 _client = new Client(_settings.Url, _settings.Key, options);
                 await _client.InitializeAsync();
-                
+
                 _logger.LogInformation("Supabase client initialized successfully");
             }
         }

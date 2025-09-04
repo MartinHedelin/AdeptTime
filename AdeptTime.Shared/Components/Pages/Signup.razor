@@ -75,7 +75,10 @@
                             I agree to the <a href="#" class="terms-link">Terms of Service</a> and <a href="#" class="terms-link">Privacy Policy</a>
                         </label>
                     </div>
-                    <ValidationMessage For="@(() => signupModel.AcceptTerms)" class="validation-message" />
+                    @if (!signupModel.AcceptTerms && isSubmitted)
+                    {
+                        <div class="validation-message">Please accept the terms and conditions</div>
+                    }
                 </div>
 
                 @if (!string.IsNullOrEmpty(errorMessage))
@@ -293,11 +296,28 @@
     private string? errorMessage;
     private string? successMessage;
     private bool isLoading = false;
+    private bool isSubmitted = false;
+
+    protected override void OnInitialized()
+    {
+#if DEBUG
+        // Auto-fill for debug mode
+        signupModel.Name = "Debug User";
+        signupModel.Email = Guid.NewGuid().ToString("N").Substring(0, 8) + "@admin.com";
+        signupModel.Password = "Test12345678";
+        signupModel.ConfirmPassword = "Test12345678";
+        signupModel.PhoneNumber = "+1234567890";
+        signupModel.Address = "123 Debug St, Test City";
+        signupModel.UserTypeId = 1; // Admin
+        signupModel.AcceptTerms = true;
+#endif
+    }
 
     private async Task HandleSignup()
     {
         try
         {
+            isSubmitted = true;
             isLoading = true;
             errorMessage = null;
             successMessage = null;
@@ -326,6 +346,27 @@
                 return;
             }
 
+            // Check if Supabase is available
+            try
+            {
+                var testConnection = await UserService.GetAllUsersAsync();
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("Failed to fetch") || ex.Message.Contains("ERR_CONNECTION_REFUSED"))
+                {
+                    errorMessage = "⚠️ Database not available. For demo purposes, signup will be simulated. Please start Supabase locally for full functionality.";
+                    successMessage = "Account created successfully (simulated)!";
+                    // Don't auto-navigate so you can see debug logs
+                    return;
+                }
+                else
+                {
+                    errorMessage = $"Database error: {ex.Message}";
+                    return;
+                }
+            }
+
             // Check if user already exists
             var existingUser = await UserService.GetUserByEmailAsync(signupModel.Email);
             if (existingUser != null)
@@ -347,11 +388,9 @@
 
             var createdUser = await UserService.CreateUserAsync(newUser);
             
-            successMessage = "Account created successfully! Redirecting to login...";
+            successMessage = "Account created successfully! Check terminal for debug logs. You can manually navigate to home page.";
             
-            // Wait a bit then redirect to login
-            await Task.Delay(1500);
-            NavigationManager.NavigateTo("/login", true);
+            // Don't auto-navigate so you can see debug logs in terminal
         }
         catch (Exception)
         {

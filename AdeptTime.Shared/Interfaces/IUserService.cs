@@ -12,4 +12,5 @@ public interface IUserService
     Task<bool> DeleteUserAsync(Guid id);
     Task<bool> ValidatePasswordAsync(string email, string password);
     Task<List<UserType>> GetUserTypesAsync();
+    Task SeedDefaultAdminUserAsync();
 }
