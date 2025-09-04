@@ -249,7 +249,6 @@ public class TimeRegistrationService : ITimeRegistrationService
             using var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Add("apikey", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0");
             httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0");
-            httpClient.DefaultRequestHeaders.Add("Content-Type", "application/json");
 
             var jsonContent = System.Text.Json.JsonSerializer.Serialize(updateData);
             var content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");

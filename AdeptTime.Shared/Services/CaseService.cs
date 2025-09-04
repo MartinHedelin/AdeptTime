@@ -177,21 +177,46 @@ public class CaseService : ICaseService
                 // Explicitly NOT including navigation properties
             };
 
-            // Use Supabase client with clean model
-            var client = await _supabaseService.GetClientAsync();
-            var response = await client.From<CaseModel>().Insert(cleanCase);
+            // Use pure HTTP POST to avoid any serialization issues
+            using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Add("apikey", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0");
+            httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0");
 
-            if (response?.Models?.FirstOrDefault() != null)
+            var caseData = new
             {
-                var created = response.Models.First();
-                await PopulateNavigationProperties(new List<CaseModel> { created });
-                
+                case_number = cleanCase.CaseNumber,
+                title = cleanCase.Title,
+                description = cleanCase.Description,
+                team_id = cleanCase.TeamId,
+                created_by = cleanCase.CreatedBy,
+                assigned_to = cleanCase.AssignedTo,
+                customer_id = cleanCase.CustomerId,
+                status = cleanCase.Status,
+                priority = cleanCase.Priority,
+                start_date = cleanCase.StartDate?.ToString("yyyy-MM-dd"),
+                end_date = cleanCase.EndDate?.ToString("yyyy-MM-dd"),
+                estimated_hours = cleanCase.EstimatedHours,
+                completed_hours = cleanCase.CompletedHours,
+                geofence_address = cleanCase.GeofenceAddress,
+                geofence_latitude = cleanCase.GeofenceLatitude,
+                geofence_longitude = cleanCase.GeofenceLongitude,
+                geofence_radius = cleanCase.GeofenceRadius
+            };
+
+            var jsonContent = System.Text.Json.JsonSerializer.Serialize(caseData);
+            var content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
+
+            var response = await httpClient.PostAsync("http://127.0.0.1:54321/rest/v1/cases", content);
+
+            if (response.IsSuccessStatusCode)
+            {
                 _logger.LogInformation($"✅ Case created in Supabase: {cleanCase.CaseNumber}");
-                return created;
+                return cleanCase; // Return the clean case since it worked
             }
             else
             {
-                throw new Exception("Failed to create case in Supabase");
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new Exception($"HTTP error: {response.StatusCode} - {errorContent}");
             }
         }
         catch (Exception ex)

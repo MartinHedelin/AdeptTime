@@ -1,0 +1,15 @@
+{
+  "case_number": "TEST-2025-9999",
+  "title": "Test Case from Curl", 
+  "description": "Testing case creation",
+  "status": "Ny",
+  "priority": "Medium",
+  "start_date": "2025-01-10",
+  "end_date": "2025-01-15",
+  "estimated_hours": 16,
+  "completed_hours": 0,
+  "geofence_address": "Copenhagen",
+  "geofence_latitude": 55.6761,
+  "geofence_longitude": 12.5683,
+  "geofence_radius": 100
+}
