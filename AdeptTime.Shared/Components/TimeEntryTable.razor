@@ -617,14 +617,27 @@
         }
     }
 
-    public void ApplyBulkStatus(string? newStatus)
+    public async void ApplyBulkStatus(string? newStatus)
     {
         if (string.IsNullOrWhiteSpace(newStatus)) return;
         if (!Enum.TryParse<TimeEntryStatus>(newStatus, out var status)) return;
 
-        foreach (var entry in TimeEntries.Where(t => selectedEmployees.Contains(t.Employee.Id)))
+        var affectedEntries = TimeEntries.Where(t => selectedEmployees.Contains(t.Employee.Id)).ToList();
+        
+        Console.WriteLine($"[TimeEntryTable] Applying bulk status '{newStatus}' to {affectedEntries.Count} entries for {selectedEmployees.Count} selected employees");
+
+        foreach (var entry in affectedEntries)
         {
+            var oldStatus = entry.Status;
             entry.Status = status;
+            
+            Console.WriteLine($"[TimeEntryTable] Updated {entry.Employee.Name} from {oldStatus} to {status}");
+            
+            // Notify parent component about the status change for database update
+            if (OnStatusChanged.HasDelegate)
+            {
+                await OnStatusChanged.InvokeAsync(entry);
+            }
         }
 
         StateHasChanged();
@@ -699,5 +712,11 @@
         {
             Console.WriteLine($"❌ CSV Export failed: {ex.Message}");
         }
+    }
+
+    // Get selected employee IDs for bulk operations
+    public List<int> GetSelectedEmployeeIds()
+    {
+        return selectedEmployees.ToList();
     }
 } 

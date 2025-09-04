@@ -75,7 +75,7 @@
         </div>
         <div class="filter-right">
             <select class="filter-select status-picker @GetBulkStatusClass()" value="@bulkStatus"
-                    @onchange="(e) => ChangeBulkStatus(e.Value?.ToString())">
+                    @onchange="async (e) => await ChangeBulkStatus(e.Value?.ToString())">
                 <option value="Afventer">Afventer</option>
                 <option value="Godkendt">Godkendt</option>
                 <option value="Afvist">Afvist</option>
@@ -713,11 +713,61 @@
         StateHasChanged();
     }
 
-    private void ChangeBulkStatus(string? newStatus)
+    private async Task ChangeBulkStatus(string? newStatus)
     {
+        if (string.IsNullOrEmpty(newStatus)) return;
+        
         bulkStatus = newStatus;
+        
+        // Apply bulk status to UI
         timeEntryTable?.ApplyBulkStatus(newStatus);
+        
+        // Update database for all affected time registrations
+        await UpdateBulkStatusInDatabase(newStatus);
+        
         StateHasChanged();
+    }
+
+    private async Task UpdateBulkStatusInDatabase(string newStatus)
+    {
+        try
+        {
+            // Get selected employee IDs from the table
+            var selectedEmployeeIds = timeEntryTable?.GetSelectedEmployeeIds() ?? new List<int>();
+            
+            if (!selectedEmployeeIds.Any())
+            {
+                Console.WriteLine("[Timeoversigt] No employees selected for bulk update");
+                return;
+            }
+
+            // Find corresponding time registrations for selected employees
+            var affectedRegistrations = timeRegistrations.Where(tr => 
+                selectedEmployeeIds.Contains((int)tr.UserId.GetHashCode())).ToList();
+
+            Console.WriteLine($"[Timeoversigt] Updating {affectedRegistrations.Count} time registrations to status: {newStatus}");
+
+            // Update each registration in database
+            foreach (var registration in affectedRegistrations)
+            {
+                registration.Status = newStatus;
+                
+                // Set approval info if approved
+                if (newStatus == "Godkendt")
+                {
+                    registration.ApprovedAt = DateTime.UtcNow;
+                    // In real app: registration.ApprovedBy = current admin user ID
+                }
+                
+                await TimeRegistrationService.UpdateTimeRegistrationAsync(registration);
+            }
+
+            Console.WriteLine($"✅ Bulk status update complete: {affectedRegistrations.Count} registrations updated to {newStatus}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Failed to update bulk status in database: {ex.Message}");
+        }
     }
 
     private void InitializeCustomers()

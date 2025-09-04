@@ -10,13 +10,15 @@ public partial class KalenderView : ContentPage
 {
     private readonly ITimeRegistrationService _timeRegistrationService;
     private readonly ITeamService _teamService;
+    private readonly ICaseService _caseService;
     private readonly UserRoleService _userRoleService;
 
-    public KalenderView(ITimeRegistrationService timeRegistrationService, ITeamService teamService, UserRoleService userRoleService)
+    public KalenderView(ITimeRegistrationService timeRegistrationService, ITeamService teamService, ICaseService caseService, UserRoleService userRoleService)
     {
         InitializeComponent();
         _timeRegistrationService = timeRegistrationService;
         _teamService = teamService;
+        _caseService = caseService;
         _userRoleService = userRoleService;
         
         InitializeMap();
@@ -34,50 +36,69 @@ public partial class KalenderView : ContentPage
     {
         try
         {
-            // Simple time registration for demo
-            var result = await DisplayPromptAsync(
-                "Tilføj Timer", 
-                "Hvor mange timer arbejdede du?", 
+            // Step 1: Load available cases
+            var allCases = await _caseService.GetAllCasesAsync();
+            var caseOptions = allCases.Select(c => $"{c.CaseNumber}: {c.Title}").ToArray();
+            
+            if (!caseOptions.Any())
+            {
+                await DisplayAlert("Ingen Sager", "Ingen tilgængelige sager fundet. Kontakt din administrator.", "OK");
+                return;
+            }
+
+            // Step 2: Let user select a case
+            var selectedCaseDisplay = await DisplayActionSheet(
+                "Vælg Sag", 
+                "Annuller", 
+                null, 
+                caseOptions);
+
+            if (selectedCaseDisplay == "Annuller" || string.IsNullOrEmpty(selectedCaseDisplay))
+                return;
+
+            var selectedCase = allCases.FirstOrDefault(c => selectedCaseDisplay.StartsWith(c.CaseNumber));
+            if (selectedCase == null)
+            {
+                await DisplayAlert("Error", "Kunne ikke finde den valgte sag", "OK");
+                return;
+            }
+
+            // Step 3: Get hours worked
+            var hoursResult = await DisplayPromptAsync(
+                $"Timer for {selectedCase.CaseNumber}", 
+                "Hvor mange timer arbejdede du på denne sag?", 
                 "OK", 
                 "Annuller", 
                 "8.5", 
                 keyboard: Keyboard.Numeric);
 
-            if (!string.IsNullOrEmpty(result) && decimal.TryParse(result, out var hours))
+            if (!string.IsNullOrEmpty(hoursResult) && decimal.TryParse(hoursResult, out var hours))
             {
-                // For demo: create with fixed IDs that exist in database
-                // In real app: get actual logged-in user ID and their team ID
-                var demoUserIds = new[] 
-                {
-                    "admin@test.com",
-                    "worker@test.com", 
-                    "john@test.com"
-                };
-                
-                var randomEmail = demoUserIds[Random.Shared.Next(demoUserIds.Length)];
-                Console.WriteLine($"[Mobile] Creating time registration for demo user: {randomEmail}");
-                
-                // Create time registration with demo data
+                // Create time registration linked to the selected case
                 var timeRegistration = new TimeRegistration
                 {
                     UserId = Guid.NewGuid(), // Demo - will use in-memory fallback
-                    TeamId = Guid.NewGuid(), // Demo - will use in-memory fallback
+                    TeamId = selectedCase.TeamId ?? Guid.NewGuid(),
                     Date = DateTime.Today,
                     CheckIn = new TimeSpan(8, 0, 0), // 8:00 AM
                     CheckOut = new TimeSpan(8, 0, 0).Add(TimeSpan.FromHours((double)hours)), // Calculate checkout
                     TotalHours = hours,
                     TimeBank = hours > 8 ? hours - 8 : 0, // Overtime calculation
                     Status = "Afventer", // Pending approval
-                    Description = $"Mobile time entry - {hours} timer ({DateTime.Now:HH:mm})",
-                    User = new User { Name = "Mobile Worker", Email = randomEmail },
-                    Team = new Team { Name = "Team Mobile" }
+                    Description = $"Mobile: {selectedCase.CaseNumber} - {hours}h ({DateTime.Now:HH:mm})",
+                    User = new User { Name = "Mobile Worker", Email = "mobile.worker@test.com" },
+                    Team = selectedCase.Team ?? new Team { Name = "Unknown Team" }
                 };
 
                 // Save to database (will use demo mode if DB unavailable)
                 await _timeRegistrationService.CreateTimeRegistrationAsync(timeRegistration);
                 
-                await DisplayAlert("Success", $"Tilføjet {hours} timer til din timebank!\n\nCheck Timeoversigt på web for at se indførslen.", "OK");
-                Console.WriteLine($"✅ Mobile time registration created: {hours} hours - should appear in Timeoversigt");
+                await DisplayAlert("Success", 
+                    $"✅ Tilføjet {hours} timer til {selectedCase.CaseNumber}!\n\n" +
+                    $"Check Timeoversigt på web for at se indførslen.", 
+                    "OK");
+                    
+                Console.WriteLine($"✅ Mobile time registration created: {hours}h for case {selectedCase.CaseNumber} - should appear in Timeoversigt");
             }
         }
         catch (Exception ex)

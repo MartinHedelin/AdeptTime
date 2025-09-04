@@ -81,7 +81,7 @@ public class CaseModel : BaseModel
     [JsonIgnore]
     public Customer? Customer { get; set; }
 
-    // Helper properties for UI compatibility with existing Case model
+    // Helper properties for UI compatibility with existing Case model  
     [JsonIgnore]
     public CaseStatus CaseStatus => Status switch
     {
