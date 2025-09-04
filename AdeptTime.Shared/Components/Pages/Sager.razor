@@ -4,8 +4,11 @@
 @using AdeptTime.Shared.Interfaces
 @using AdeptTime.Shared.Services
 @inject ISaegsService SaegsService
+@inject ICaseService CaseService
+@inject ITeamService TeamDataService
 @inject TeamSelectionService TeamService
 @inject NavigationManager Navigation
+@inject UserRoleService UserRoleService
 
 <PageTitle>Sager</PageTitle>
 
@@ -229,8 +232,11 @@
     private Case? selectedCase = null;
 
     private List<Case> cases = new();
+    private List<CaseModel> databaseCases = new();
+    private List<Team> availableTeams = new();
     private List<Customer> customers = new();
     private List<Employee> employees = new();
+    private string _selectedTeamId = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -242,11 +248,110 @@
         
         // Load initial data
         await LoadData();
+        await LoadTeamsAsync();
+        await LoadCasesFromDatabaseAsync();
     }
 
-    private void HandleTeamSelectionChanged(string selectedTeam)
+    private async void HandleTeamSelectionChanged(string selectedTeam)
     {
-        StateHasChanged();
+        Console.WriteLine($"[Sager] Sidebar team selection changed to: {selectedTeam}");
+        
+        // Convert team name to team ID for our filter
+        if (selectedTeam == "All")
+        {
+            _selectedTeamId = "";
+        }
+        else
+        {
+            var team = availableTeams.FirstOrDefault(t => t.Name == selectedTeam);
+            _selectedTeamId = team?.Id.ToString() ?? "";
+        }
+        
+        // Reload cases with new filter
+        await LoadCasesFromDatabaseAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task LoadTeamsAsync()
+    {
+        try
+        {
+            availableTeams = await TeamDataService.GetAllTeamsAsync();
+            Console.WriteLine($"[Sager] Loaded {availableTeams.Count} teams");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Sager] Failed to load teams: {ex.Message}");
+            availableTeams = new List<Team>();
+        }
+    }
+
+    private async Task LoadCasesFromDatabaseAsync()
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(_selectedTeamId) && Guid.TryParse(_selectedTeamId, out var teamId))
+            {
+                // Load by specific team
+                databaseCases = await CaseService.GetCasesByTeamAsync(teamId);
+                Console.WriteLine($"[Sager] Loaded {databaseCases.Count} cases for team {teamId}");
+            }
+            else
+            {
+                // Load all cases
+                databaseCases = await CaseService.GetAllCasesAsync();
+                Console.WriteLine($"[Sager] Loaded {databaseCases.Count} cases (all teams)");
+            }
+
+            // Convert CaseModel to Case for UI compatibility
+            cases = databaseCases.Select(dbCase => new Case
+            {
+                Id = (int)dbCase.Id.GetHashCode(),
+                CaseNumber = dbCase.CaseNumber,
+                Description = dbCase.Description ?? "",
+                Comment = "",
+                Customer = new Customer 
+                { 
+                    Id = dbCase.CustomerId ?? 0, 
+                    Name = GetCustomerName(dbCase.CustomerId ?? 0) 
+                },
+                AssignedEmployee = new Employee 
+                { 
+                    Id = (int)(dbCase.AssignedTo?.GetHashCode() ?? 0),
+                    Name = dbCase.AssignedToUser?.Name ?? "Ikke tildelt"
+                },
+                Manager = new Employee 
+                { 
+                    Id = (int)(dbCase.CreatedBy?.GetHashCode() ?? 0),
+                    Name = dbCase.CreatedByUser?.Name ?? "Unknown"
+                },
+                Department = dbCase.Team?.Name ?? "Unknown",
+                CompletedHours = dbCase.CompletedHours,
+                TotalHours = dbCase.EstimatedHours ?? 0,
+                StartDate = dbCase.StartDate ?? DateTime.Today,
+                EndDate = dbCase.EndDate ?? DateTime.Today.AddDays(7),
+                Status = dbCase.CaseStatus,
+                AttachmentCount = 0
+            }).ToList();
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Sager] Failed to load cases: {ex.Message}");
+            databaseCases = new List<CaseModel>();
+            cases = new List<Case>();
+        }
+    }
+
+    private string GetCustomerName(int customerId)
+    {
+        return customerId switch
+        {
+            1 => "VVS Hansen ApS",
+            2 => "Elektro Nielsen A/S", 
+            3 => "Byg & Co",
+            _ => "Unknown Customer"
+        };
     }
 
     private async Task LoadData()

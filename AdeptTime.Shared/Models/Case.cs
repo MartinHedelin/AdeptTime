@@ -23,7 +23,9 @@ public enum CaseStatus
     Badges,      // Active/In Progress (Green)
     Pending,     // Pending (Orange) 
     Review,      // Under Review (Blue)
-    Completed    // Completed (Gray)
+    Completed,   // Completed (Gray)
+    InProgress,  // In Progress
+    Cancelled    // Cancelled
 }
 
 public class Customer
