@@ -205,6 +205,7 @@ public class TimeRegistrationService : ITimeRegistrationService
             using var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Add("apikey", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0");
             httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0");
+            httpClient.DefaultRequestHeaders.Add("Prefer", "return=representation"); // Return the created record
 
             var timeData = new
             {
@@ -229,8 +230,29 @@ public class TimeRegistrationService : ITimeRegistrationService
 
             if (response.IsSuccessStatusCode)
             {
-                _logger.LogInformation($"✅ Time registration created in Supabase database");
-                return registration;
+                _logger.LogInformation($"✅ Time registration created in Supabase database. Response: {responseContent}");
+                
+                // Parse the returned record to get the actual database ID
+                try
+                {
+                    var createdRecords = System.Text.Json.JsonSerializer.Deserialize<TimeRegistration[]>(responseContent);
+                    if (createdRecords?.Length > 0)
+                    {
+                        var createdRecord = createdRecords[0];
+                        _logger.LogInformation($"✅ Created time registration with ID: {createdRecord.Id}");
+                        return createdRecord;
+                    }
+                    else
+                    {
+                        _logger.LogWarning("No records returned from database, using original registration");
+                        return registration;
+                    }
+                }
+                catch (Exception parseEx)
+                {
+                    _logger.LogWarning($"Failed to parse response: {parseEx.Message}, using original registration");
+                    return registration;
+                }
             }
             else
             {

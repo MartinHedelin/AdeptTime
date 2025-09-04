@@ -3,6 +3,7 @@
     x:Class="AdeptTime.Views.IndstillingerView"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:system="clr-namespace:System;assembly=mscorlib"
 
     Title="Indstillinger"
     BackgroundColor="White"
@@ -40,21 +41,147 @@
         </Grid>
 
         <!-- Main Content -->
-        <StackLayout Grid.Row="1" Padding="20" VerticalOptions="Center" HorizontalOptions="Center">
-            <Label 
-                Text="Indstillinger" 
-                FontSize="32" 
-                FontAttributes="Bold"
-                HorizontalOptions="Center" 
-                TextColor="#4A4E7C"
-                Margin="0,0,0,10" />
-            
-            <Label 
-                Text="This view will contain app settings and preferences." 
-                FontSize="16" 
-                HorizontalOptions="Center" 
-                TextColor="#666"
-                HorizontalTextAlignment="Center" />
-        </StackLayout>
+        <ScrollView Grid.Row="1">
+            <StackLayout Padding="20" Spacing="20">
+                
+                <!-- Header -->
+                <StackLayout Spacing="8" Margin="0,20,0,30">
+                    <Label 
+                        Text="Indstillinger" 
+                        FontSize="28" 
+                        FontAttributes="Bold"
+                        HorizontalOptions="Center" 
+                        TextColor="#4A4E7C" />
+                    
+                    <Label 
+                        Text="App settings and preferences" 
+                        FontSize="14" 
+                        HorizontalOptions="Center" 
+                        TextColor="#666"
+                        HorizontalTextAlignment="Center" />
+                </StackLayout>
+
+                <!-- User Info Section -->
+                <Frame BackgroundColor="White" Padding="20" CornerRadius="12" HasShadow="True" Margin="0,10">
+                    <StackLayout Spacing="12">
+                        <Label Text="User Information" FontSize="18" FontAttributes="Bold" TextColor="#4A4E7C" />
+                        <StackLayout Orientation="Horizontal" Spacing="10">
+                            <Label Text="Email:" FontSize="14" FontAttributes="Bold" TextColor="#333" />
+                            <Label x:Name="UserEmailLabel" Text="Loading..." FontSize="14" TextColor="#666" />
+                        </StackLayout>
+                        <StackLayout Orientation="Horizontal" Spacing="10">
+                            <Label Text="Role:" FontSize="14" FontAttributes="Bold" TextColor="#333" />
+                            <Label x:Name="UserRoleLabel" Text="Worker" FontSize="14" TextColor="#666" />
+                        </StackLayout>
+                    </StackLayout>
+                </Frame>
+
+                <!-- App Settings Section -->
+                <Frame BackgroundColor="White" Padding="20" CornerRadius="12" HasShadow="True" Margin="0,10">
+                    <StackLayout Spacing="15">
+                        <Label Text="App Settings" FontSize="18" FontAttributes="Bold" TextColor="#4A4E7C" />
+                        
+                        <!-- Notification Settings -->
+                        <StackLayout Orientation="Horizontal" Spacing="10">
+                            <Label Text="Push Notifications" FontSize="14" VerticalOptions="Center" />
+                            <Switch x:Name="NotificationSwitch" IsToggled="True" HorizontalOptions="EndAndExpand" />
+                        </StackLayout>
+                        
+                        <!-- Auto-submit timesheet -->
+                        <StackLayout Orientation="Horizontal" Spacing="10">
+                            <Label Text="Auto-submit timesheets" FontSize="14" VerticalOptions="Center" />
+                            <Switch x:Name="AutoSubmitSwitch" IsToggled="False" HorizontalOptions="EndAndExpand" />
+                        </StackLayout>
+                    </StackLayout>
+                </Frame>
+
+                <!-- Quick Time Entry Section -->
+                <Frame BackgroundColor="White" Padding="20" CornerRadius="12" HasShadow="True" Margin="0,10">
+                    <StackLayout Spacing="15">
+                        <Label Text="⏰ Quick Time Entry" FontSize="18" FontAttributes="Bold" TextColor="#4A4E7C" />
+                        
+                        <Entry x:Name="HoursEntry" 
+                               Placeholder="Hours (e.g. 8.5)" 
+                               Keyboard="Numeric"
+                               BackgroundColor="#F8F9FA"
+                               FontSize="16"
+                               HeightRequest="50" />
+                        
+                        <DatePicker x:Name="DatePicker" 
+                                    Date="{x:Static system:DateTime.Now}"
+                                    BackgroundColor="#F8F9FA"
+                                    FontSize="16"
+                                    HeightRequest="50" />
+                        
+                        <Picker x:Name="TeamPicker"
+                                Title="Select Team"
+                                BackgroundColor="#F8F9FA"
+                                FontSize="16"
+                                HeightRequest="50" />
+                        
+                        <Button x:Name="AddTimeButton"
+                                Text="➕ Add Time Entry" 
+                                BackgroundColor="#27ae60" 
+                                TextColor="White" 
+                                FontSize="16"
+                                FontAttributes="Bold"
+                                CornerRadius="8" 
+                                HeightRequest="50"
+                                Margin="10"
+                                Clicked="OnAddTimeEntryClicked">
+                            <Button.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnAddTimeEntryClicked" />
+                            </Button.GestureRecognizers>
+                        </Button>
+                    </StackLayout>
+                </Frame>
+
+                <!-- Actions Section -->
+                <Frame BackgroundColor="White" Padding="20" CornerRadius="12" HasShadow="True" Margin="0,10">
+                    <StackLayout Spacing="15">
+                        <Label Text="Actions" FontSize="18" FontAttributes="Bold" TextColor="#4A4E7C" />
+                        
+                        <!-- Sync Data Button -->
+                        <Button 
+                            Text="Sync Data"
+                            BackgroundColor="#3498db"
+                            TextColor="White"
+                            FontSize="16"
+                            CornerRadius="8"
+                            HeightRequest="50"
+                            Clicked="OnSyncDataClicked" />
+                        
+                        <!-- Clear Cache Button -->
+                        <Button 
+                            Text="Clear Cache"
+                            BackgroundColor="#95a5a6"
+                            TextColor="White"
+                            FontSize="16"
+                            CornerRadius="8"
+                            HeightRequest="50"
+                            Clicked="OnClearCacheClicked" />
+                        
+                        <!-- Logout Button -->
+                        <Button 
+                            Text="Logout"
+                            BackgroundColor="#e74c3c"
+                            TextColor="White"
+                            FontSize="16"
+                            FontAttributes="Bold"
+                            CornerRadius="8"
+                            HeightRequest="50"
+                            Clicked="OnLogoutClicked" />
+                    </StackLayout>
+                </Frame>
+
+                <!-- App Info -->
+                <StackLayout Spacing="8" Margin="0,20,0,40" HorizontalOptions="Center">
+                    <Label Text="AdeptTime Mobile" FontSize="16" FontAttributes="Bold" TextColor="#4A4E7C" HorizontalOptions="Center" />
+                    <Label Text="Version 1.0.0" FontSize="12" TextColor="#999" HorizontalOptions="Center" />
+                    <Label Text="© 2024 AdeptTime" FontSize="10" TextColor="#ccc" HorizontalOptions="Center" />
+                </StackLayout>
+
+            </StackLayout>
+        </ScrollView>
     </Grid>
 </ContentPage>

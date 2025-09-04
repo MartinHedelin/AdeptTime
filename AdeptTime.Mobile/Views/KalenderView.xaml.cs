@@ -36,9 +36,13 @@ public partial class KalenderView : ContentPage
     {
         try
         {
+            await DisplayAlert("Debug", "Button clicked! Loading cases...", "OK");
+            
             // Step 1: Load available cases
             var allCases = await _caseService.GetAllCasesAsync();
-            var caseOptions = allCases.Select(c => $"{c.CaseNumber}: {c.Title}").ToArray();
+            await DisplayAlert("Debug", $"Found {allCases?.Count() ?? 0} cases", "OK");
+            
+            var caseOptions = allCases?.Select(c => $"{c.CaseNumber}: {c.Title}").ToArray() ?? new string[0];
             
             if (!caseOptions.Any())
             {
