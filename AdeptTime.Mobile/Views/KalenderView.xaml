@@ -122,26 +122,17 @@
                 <Label Text="Mandag d. 16 marts" FontSize="14" TextColor="#666" />
             </StackLayout>
 
-            <Border 
+            <Button 
                 Grid.Column="1"
-                WidthRequest="36" 
-                HeightRequest="36"
+                Text="+ Time"
+                FontSize="14"
+                FontAttributes="Bold"
                 BackgroundColor="#D5C6FE"
-                Stroke="#E0E0E0"
-                StrokeThickness="1"
-                Padding="0">
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="6" />
-                </Border.StrokeShape>
-                
-                <Label 
-                    Text="+"
-                    FontSize="18"
-                    FontAttributes="Bold"
-                    TextColor="#404261"
-                    HorizontalOptions="Center"
-                    VerticalOptions="Center" />
-            </Border>
+                TextColor="#404261"
+                CornerRadius="6"
+                WidthRequest="80"
+                HeightRequest="36"
+                Clicked="OnAddTimeClicked" />
         </Grid>
 
 

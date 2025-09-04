@@ -517,7 +517,7 @@
                 Name = employeeName,
                 PhoneNumber = employeePhone,
                 Address = employeeAddress,
-                UserState = "invited" // New column for tracking user state
+                UserState = "active" // Set to active by default for testing
             };
 
             var createdUser = await UserService.CreateUserAsync(newUser);

@@ -17,7 +17,14 @@
         </ResourceDictionary>
     </Shell.Resources>
 
-    <TabBar>
+    <!-- Login Page (no tabs) -->
+    <ShellContent x:Name="LoginShell"
+                  Route="login"
+                  ContentTemplate="{DataTemplate local:LoginView}"
+                  Shell.TabBarIsVisible="False" />
+
+    <!-- Main App (with tabs) -->
+    <TabBar x:Name="MainTabBar" Route="main">
         <ShellContent
             Title="Kalender"
             Icon="naviconone.png"
